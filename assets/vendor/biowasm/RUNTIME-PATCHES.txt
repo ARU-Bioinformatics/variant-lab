@@ -1,0 +1,7 @@
+Local compatibility changes for Variant Lab:
+Aioli: added execIO with real file descriptor stdin/stdout/stderr and returned process status.
+Emscripten JS loaders: expose exit(status) as Module.__exitStatus.
+Tool WebAssembly binaries are unchanged.
+Upstream: https://github.com/biowasm/biowasm and https://github.com/biowasm/aioli
+
+Tool module reset after each GNU utility/Bowtie2 invocation prevents stale C globals and getopt state.
