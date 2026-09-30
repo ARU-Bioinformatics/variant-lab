@@ -7,9 +7,35 @@ const dom=new JSDOM(fs.readFileSync(root+'/index.html','utf8'),{url:'http://vari
 async function testEditorUI(w) {
   const doc = w.document, app = w.MG.app;
   const waitFor = async find => { for (let i = 0; i < 300; i++) { if (find()) return find(); await new Promise(r => setTimeout(r, 10)); } throw Error('Editor UI did not reach expected state'); };
-  const dialog = () => doc.querySelector('.nano-overlay [role="dialog"][aria-label="Text editor"]');
+  const editorView = () => doc.querySelector('.nano-terminal[role="region"][aria-label="Text editor"]');
+  const bodyChildren = Array.from(doc.body.children);
+  const bodyAttributes = Array.from(doc.body.attributes, a => [a.name, a.value]);
+  const historyNodes = Array.from(app.term.outEl.childNodes);
+  const toolbarState = Array.from(app.term.toolbar.querySelectorAll('button'), node => [node, node.disabled]);
+  const filesHidden = app.term.filesEl.hidden;
+  function assertEmbedded() {
+    assert.equal(editorView().parentNode, app.term.body, 'Editor runs inside the terminal body');
+    assert.equal(doc.querySelector('#terminalPanel').hidden, false, 'Opening nano selects the Terminal tab');
+    assert.equal(doc.querySelector('#galaxyPanel').hidden, true);
+    assert.equal(app.term.screen.hidden, true); assert.equal(app.term.filesEl.hidden, true);
+    assert.equal(app.term.input.disabled, true);
+    assert(toolbarState.every(([button]) => button.disabled));
+    assert.equal(doc.querySelector('.nano-overlay,[role="dialog"],[aria-modal="true"]'), null);
+    assert.deepEqual(Array.from(doc.body.children), bodyChildren, 'No body-level editor surface');
+    assert.deepEqual(Array.from(doc.body.attributes, a => [a.name, a.value]), bodyAttributes);
+    assert.equal(doc.querySelector('[inert]'), null, 'The rest of the practical stays available');
+    for (const node of historyNodes) assert.equal(node.parentNode, app.term.outEl, 'Prior terminal history is retained');
+  }
+  function assertRestored() {
+    assert.equal(editorView(), null); assert.equal(app.term.editorView, null);
+    assert.equal(app.term.screen.hidden, false); assert.equal(app.term.filesEl.hidden, filesHidden);
+    assert.equal(app.term.input.disabled, false);
+    for (const [button, disabled] of toolbarState) assert.equal(button.disabled, disabled);
+    for (const node of historyNodes) assert.equal(node.parentNode, app.term.outEl, 'History survives the return to the prompt');
+    assert.deepEqual(Array.from(doc.body.children), bodyChildren);
+  }
   async function saveAndExit(text, filename) {
-    const editor = await waitFor(dialog), buffer = editor.querySelector('.nano-buffer');
+    const editor = await waitFor(editorView), buffer = editor.querySelector('.nano-buffer');
     buffer.value = text; buffer.dispatchEvent(new w.Event('input', {bubbles: true}));
     editor.querySelector('[data-editor-action="save"]').click();
     const prompt = await waitFor(() => doc.querySelector('[data-editor-prompt="filename"]'));
@@ -21,7 +47,7 @@ async function testEditorUI(w) {
   }
   let finished = false;
   const terminalRun = app.term.exec('nano "results/editor-ui.txt" && echo editor-finished').then(code => { finished = true; return code; });
-  await waitFor(dialog); assert.equal(app.term.busy, true); assert.equal(finished, false);
+  await waitFor(editorView); assertEmbedded(); assert.equal(app.term.busy, true); assert.equal(finished, false);
   const queued = app.term.exec('echo queued > results/queued-after-editor.txt');
   assert.equal(app.fs.exists('results/queued-after-editor.txt'), false, 'Queued commands wait for the editor');
   doc.querySelector('#datasetSelect').value = 'yeast';
@@ -32,19 +58,20 @@ async function testEditorUI(w) {
   assert.equal(await terminalRun, 0); assert.equal(await queued, 0);
   assert.equal(await app.fs.readText('results/editor-ui.txt'), 'edited in the terminal\n');
   assert.equal(await app.fs.readText('results/queued-after-editor.txt'), 'queued\n');
-  assert.equal(app.term.busy, false);
+  assert.equal(app.term.busy, false); assertRestored();
   doc.querySelector('[data-tab="galaxy"]').click();
   const tool = [...doc.querySelectorAll('.gl-tool')].find(button => button.querySelector('strong')?.textContent === 'Text editor');
   assert(tool, 'Galaxy text editor tool is visible'); tool.click();
   const filename = doc.querySelector('#galaxyRoot input[name="filename"]');
   filename.value = 'results/galaxy-editor.txt'; filename.dispatchEvent(new w.Event('input', {bubbles: true}));
-  doc.querySelector('#galaxyRoot .gl-run').click(); await waitFor(dialog);
+  doc.querySelector('#galaxyRoot .gl-run').click(); await waitFor(editorView); assertEmbedded();
   assert.equal(app.galaxy.jobs.at(-1).status, 'running');
   await saveAndExit('edited through Galaxy\n', 'results/galaxy-editor.txt');
   await waitFor(() => app.galaxy.jobs.at(-1).status === 'success');
   assert.equal(await app.fs.readText('results/galaxy-editor.txt'), 'edited through Galaxy\n');
   assert(app.galaxy.jobs.at(-1).outputs.some(p => p.endsWith('/results/galaxy-editor.txt')), 'Galaxy records the edited output');
-  console.log('PASS: terminal/Galaxy editor entry, command queue, busy state and dataset lock');
+  assertRestored();
+  console.log('PASS: embedded terminal/Galaxy editor, restored history, command queue, busy state and dataset lock');
 }
 
 (async()=>{const w=dom.window;for(let i=0;i<100&&!w.MG?.app?.active;i++)await new Promise(r=>setTimeout(r,30));assert.equal(w.MG.app.active.id,'human');assert.equal(errors.length,0,errors.join('\n'));const doc=w.document;assert.equal(doc.querySelector('#compareTruth'),null);assert.match(doc.querySelector('#datasetInfo').textContent,/Sequencing reads; no variants have been added/);assert(![...w.MG.app.fs.entries.keys()].some(p=>p.endsWith('/truth.vcf')));console.log('initial files',w.MG.app.fs.entries.size);assert.equal(doc.querySelectorAll('.gl-tool').length,14);doc.querySelector('[data-tab="galaxy"]').click();assert.equal(doc.querySelector('#galaxyPanel').hidden,false);assert.equal(doc.querySelector('#terminalPanel').hidden,true);const code=await w.MG.app.term.exec('echo testing > results/note.txt');assert.equal(code,0);assert.equal(await w.MG.app.fs.readText('results/note.txt'),'testing\n');await testEditorUI(w);doc.querySelector('#datasetSelect').value='yeast';doc.querySelector('#datasetSelect').dispatchEvent(new w.Event('change'));for(let i=0;i<100&&w.MG.app.active.id!=='yeast';i++)await new Promise(r=>setTimeout(r,30));assert.equal(w.MG.app.active.id,'yeast');assert.match(doc.querySelector('#scriptEditor').value,/--ploidy 1/);assert.equal(w.MG.app.fs.exists('/home/student/human/results/note.txt'),true);doc.querySelector('#recipeCaller').value='exactSNP';doc.querySelector('#refreshRecipe').click();assert.match(doc.querySelector('#scriptEditor').value,/exactSNP -b/);assert(!/bcftools call/.test(doc.querySelector('#scriptEditor').value));doc.querySelector('#notebook').value='hypothesis';doc.querySelector('#notebook').dispatchEvent(new w.Event('input'));assert.equal(w.MG.store.get('notebook'),'hypothesis');doc.querySelector('[data-tab="compare"]').click();assert.equal(doc.querySelector('#comparePanel').hidden,false);doc.querySelector('#compareButton').click();assert.match(doc.querySelector('#notice').textContent,/Choose two/);assert.equal(errors.length,0,errors.join('\n'));let exported;w.MG.downloadBlob=(blob,name)=>{exported={blob,name}};doc.querySelector('#exportSession').click();for(let i=0;i<100&&!exported;i++)await new Promise(r=>setTimeout(r,30));assert(exported,'experiment export');const archive=Buffer.from(await exported.blob.arrayBuffer());assert.match(archive.toString('utf8'),/experiment.json/);assert.match(archive.toString('utf8'),/hypothesis/);assert.match(archive.toString('utf8'),/note.txt/);console.log('PASS: export archive, page initialization, tabs, terminal journaling, shared files, dataset switching, recipes, notes and empty comparison state');w.close();})().catch(e=>{console.error(e,errors);dom.window.close();process.exitCode=1});

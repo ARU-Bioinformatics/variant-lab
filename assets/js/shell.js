@@ -553,7 +553,7 @@
     }
     if (args.length && !args[0]) throw userErr('nano: filename cannot be empty', 2);
     if (typeof MG.openTextEditor !== 'function') throw userErr('nano: the browser editor is not available');
-    try { return await MG.openTextEditor({ fs: ctx.fs, path: args[0] }); }
+    try { return await MG.openTextEditor({ fs: ctx.fs, path: args[0], term: ctx.term }); }
     catch (error) { throw userErr(error.message?.startsWith('nano:') ? error.message : 'nano: ' + error.message); }
   };
   B.nano.interactive = true;
@@ -1263,7 +1263,7 @@
     throw userErr(`No manual entry for ${name}`);
   };
   const BUILTIN_MAN = {
-    nano: 'nano [FILE]   create or edit a UTF-8 text file (up to 2 MiB).\nCtrl+O: choose a filename, then Enter to save. Ctrl+X: exit; unsaved edits prompt before closing.\nTab inserts a tab character. Save and Exit buttons provide the same actions.\nUse mkdir first if the parent directory does not exist. Pipes and redirection are not supported.\nThis is a browser editor with nano-style controls, not GNU nano. Files stay in the current tab; use Download work to keep them.',
+    nano: 'nano [FILE]   create or edit a UTF-8 text file (up to 2 MiB).\nCtrl+O: choose a filename, then Enter to save. Ctrl+X: exit; unsaved edits prompt before closing.\nTab inserts a tab character. The shortcut labels at the bottom of the terminal are also clickable.\nUse mkdir first if the parent directory does not exist. Pipes and redirection are not supported.\nThis is a browser editor with nano-style controls, not GNU nano. Files stay in the current tab; use Download work to keep them.',
     ls: 'ls [-l] [-h] [-a] [DIR]   list files (-l long format, -h human-readable sizes)',
     head: 'head [-n N] FILE           print the first N lines (default 10)',
     tail: 'tail [-n N] FILE           print the last N lines (default 10)',

@@ -43,8 +43,9 @@
   MG.openTextEditor = async function (options) {
     options = options || {};
     if (active) throw error('a text editor is already open.');
-    const fs = options.fs;
+    const fs = options.fs, term = options.term;
     if (!fs || typeof fs.resolve !== 'function' || typeof fs.readBytes !== 'function' || typeof fs.writeText !== 'function') throw error('the file system is unavailable.');
+    if (!term || typeof term.mountEditor !== 'function') throw error('an interactive terminal is required.');
     active = true;
     const cwd = fs.cwd;
     let currentPath = null, originalText = '', bom = false, existing = false;
@@ -71,8 +72,8 @@
       throw error(describe(cause).slice(6));
     }
 
-    return new Promise(function (resolve) {
-      const doc = document, previousFocus = doc.activeElement, id = 'nano-editor-' + (++editorNumber);
+    return new Promise(function (resolve, reject) {
+      const doc = document, id = 'nano-editor-' + (++editorNumber);
       const el = function (tag, className, text) {
         const node = doc.createElement(tag);
         if (className) node.className = className;
@@ -85,22 +86,24 @@
         node.addEventListener('click', handler);
         return node;
       };
-      const overlay = el('div', 'nano-overlay');
-      const dialog = el('section', 'nano-dialog');
-      dialog.setAttribute('role', 'dialog');
-      dialog.setAttribute('aria-modal', 'true');
-      dialog.setAttribute('aria-label', 'Text editor');
-      dialog.setAttribute('aria-describedby', id + '-help');
-      dialog.dataset.editorDirty = 'false';
+      const view = el('section', 'nano-terminal');
+      view.setAttribute('role', 'region');
+      view.setAttribute('aria-label', 'Text editor');
+      view.setAttribute('aria-describedby', id + '-help');
+      view.dataset.editorDirty = 'false';
       const header = el('header', 'nano-header');
-      const heading = el('h2', '', 'Text editor');
+      const heading = el('span', 'nano-title', 'nano (browser)');
+      const pathLabel = el('span', 'nano-path'); pathLabel.dataset.editorPath = '';
+      const state = el('span', 'nano-state'); state.dataset.editorState = '';
+      header.append(heading, pathLabel, state);
       const controls = el('div', 'nano-controls');
-      const saveButton = button('save', 'Save (Ctrl+O)', function () { openFilename(false); });
-      const exitButton = button('exit', 'Exit (Ctrl+X)', requestExit);
-      controls.append(saveButton, exitButton); header.append(heading, controls);
-      const help = el('p', 'nano-help', 'A nano-style browser editor. Ctrl+O saves; Ctrl+X exits. Tab inserts a tab; Shift+Tab moves to the controls.');
+      const saveButton = button('save', '^O Write Out', function () { openFilename(false); });
+      const exitButton = button('exit', '^X Exit', requestExit);
+      saveButton.setAttribute('aria-label', 'Write out file (Ctrl+O)');
+      exitButton.setAttribute('aria-label', 'Exit editor (Ctrl+X)');
+      controls.append(saveButton, exitButton);
+      const help = el('p', 'nano-help', 'A nano-style browser editor inside the terminal. Ctrl+O saves; Ctrl+X exits. Tab inserts a tab; Shift+Tab moves to other controls.');
       help.id = id + '-help';
-      const pathLabel = el('p', 'nano-path'); pathLabel.dataset.editorPath = '';
       const buffer = el('textarea', 'nano-buffer');
       buffer.setAttribute('aria-label', 'File contents');
       buffer.setAttribute('aria-describedby', help.id);
@@ -110,15 +113,17 @@
       let savedDisplay = buffer.value, style = lineStyle(originalText), dirty = false, closed = false, busy = false, prompt = null;
       const footer = el('div', 'nano-footer');
       const position = el('span', 'nano-position'); position.dataset.editorPosition = '';
-      const state = el('span', 'nano-state'); state.dataset.editorState = '';
-      footer.append(position, state);
+      footer.append(position);
       const status = el('p', 'nano-status'); status.dataset.editorStatus = ''; status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
       const promptHost = el('div', 'nano-prompt-host');
-      dialog.append(header, help, pathLabel, buffer, footer, status, promptHost); overlay.append(dialog);
-      const background = Array.from(doc.body.children).map(function (node) { return { node: node, inert: node.inert, inertAttr: node.hasAttribute('inert'), hidden: node.getAttribute('aria-hidden') }; });
-      const oldOverflow = doc.body.style.overflow;
-      doc.body.append(overlay); doc.body.style.overflow = 'hidden';
-      background.forEach(function (entry) { entry.node.inert = true; entry.node.setAttribute('inert', ''); entry.node.setAttribute('aria-hidden', 'true'); });
+      view.append(header, help, buffer, footer, status, promptHost, controls);
+      let unmount;
+      try {
+        unmount = term.mountEditor(view);
+        if (typeof unmount !== 'function') throw error('the terminal could not mount the editor.');
+      } catch (cause) {
+        active = false; view.remove(); reject(error(describe(cause).slice(6))); return;
+      }
 
       function report(message, failure) {
         status.textContent = message;
@@ -127,9 +132,9 @@
       }
       function update() {
         dirty = buffer.value !== savedDisplay;
-        dialog.dataset.editorDirty = String(dirty);
+        view.dataset.editorDirty = String(dirty);
         pathLabel.textContent = currentPath ? (typeof fs.pretty === 'function' ? fs.pretty(currentPath) : currentPath) : 'New file';
-        state.textContent = dirty ? 'Unsaved changes' : existing ? 'Saved' : 'New file';
+        state.textContent = dirty ? 'Modified' : '';
         const before = buffer.value.slice(0, buffer.selectionStart), lines = before.split('\n');
         position.textContent = 'Line ' + lines.length + ', column ' + (Array.from(lines[lines.length - 1]).length + 1);
       }
@@ -137,54 +142,53 @@
         if (style.mixed) return 'Mixed line endings. Saving edits converts them to LF; saving unchanged text preserves the original bytes.';
         if (style.separator === '\r\n') return 'CRLF line endings will be preserved.';
         if (style.separator === '\r') return 'CR line endings will be preserved.';
-        return 'Changes are written to the file only when you save.';
+        return existing ? 'File loaded' : 'New buffer';
       }
       function clearPrompt(focusBuffer) {
         prompt = null; promptHost.replaceChildren();
-        buffer.disabled = false; saveButton.disabled = false; exitButton.disabled = false;
+        buffer.disabled = false; saveButton.disabled = false; exitButton.disabled = false; controls.hidden = false;
         if (focusBuffer !== false) buffer.focus();
       }
       function cancelPrompt() {
         if (busy) return;
-        clearPrompt(); report('Cancelled. Your edits are still in the editor.');
+        clearPrompt(); report('Cancelled');
       }
       function makePrompt(kind, title) {
         clearPrompt(false);
         const panel = el('section', 'nano-prompt'); panel.dataset.editorPrompt = kind;
         panel.setAttribute('role', 'group'); panel.setAttribute('aria-label', title);
-        panel.append(el('h3', '', title));
+        if (kind !== 'filename') panel.append(el('span', 'nano-prompt-question', title));
         promptHost.append(panel); prompt = { kind: kind, panel: panel };
-        buffer.disabled = true; saveButton.disabled = true; exitButton.disabled = true;
+        buffer.disabled = true; saveButton.disabled = true; exitButton.disabled = true; controls.hidden = true;
         return panel;
       }
       function openFilename(exitAfterSave) {
         if (busy) return;
-        const panel = makePrompt('filename', 'Save file');
+        const panel = makePrompt('filename', 'File Name to Write:');
         const form = el('form', 'nano-filename-form');
-        const label = el('label', '', 'Filename'); label.htmlFor = id + '-filename';
+        const label = el('label', '', 'File Name to Write:'); label.htmlFor = id + '-filename';
         const input = el('input', 'nano-filename'); input.id = label.htmlFor;
         input.type = 'text'; input.dataset.editorFilename = ''; input.autocomplete = 'off'; input.spellcheck = false;
         input.value = currentPath || '';
         const actions = el('div', 'nano-prompt-actions');
-        const save = button('confirm-save', 'Save', function () { form.requestSubmit(); });
-        const cancel = button('cancel', 'Cancel', cancelPrompt);
+        const save = button('confirm-save', 'Enter Write', function () { form.requestSubmit(); });
+        const cancel = button('cancel', '^C Cancel', cancelPrompt);
         actions.append(save, cancel); form.append(label, input, actions);
         form.addEventListener('submit', function (event) { event.preventDefault(); if (!busy) beginSave(input.value, exitAfterSave); });
         panel.append(form); input.focus(); input.setSelectionRange(input.value.length, input.value.length);
-        report('Enter a filename, then press Enter to save. Escape or Ctrl+C cancels.');
+        report('Enter to write; ^C to cancel');
       }
       function requestExit() {
         if (busy || closed) return;
         update();
         if (!dirty) { close(); return; }
-        const panel = makePrompt('unsaved', 'Save changes before closing?');
-        panel.append(el('p', '', 'You have edits that have not been saved.'));
+        const panel = makePrompt('unsaved', 'Save modified buffer?');
         const actions = el('div', 'nano-prompt-actions');
-        const save = button('save', 'Save', function () { openFilename(true); });
-        const discard = button('discard', 'Discard changes', close);
-        const cancel = button('cancel', 'Cancel', cancelPrompt);
+        const save = button('save', 'Y Yes', function () { openFilename(true); });
+        const discard = button('discard', 'N No', close);
+        const cancel = button('cancel', '^C Cancel', cancelPrompt);
         actions.append(save, discard, cancel); panel.append(actions); cancel.focus();
-        report('Choose Save, Discard changes or Cancel.');
+        report('Y to save, N to discard changes, ^C to cancel');
       }
       function writable(target) {
         const entry = fs.get(target);
@@ -197,14 +201,13 @@
         try { target = checkPath(fs, filename, cwd); writable(target); }
         catch (cause) { report(describe(cause), true); return; }
         if (target !== currentPath && fs.exists(target)) {
-          const panel = makePrompt('overwrite', 'Replace the existing file?');
+          const panel = makePrompt('overwrite', 'Overwrite existing file?');
           panel.append(el('p', 'nano-overwrite-path', target));
-          panel.append(el('p', '', 'Saving will replace its contents.'));
           const actions = el('div', 'nano-prompt-actions');
-          const overwrite = button('overwrite', 'Replace file', function () { saveTo(target, exitAfterSave); });
-          const cancel = button('cancel', 'Cancel', cancelPrompt);
+          const overwrite = button('overwrite', 'Y Yes', function () { saveTo(target, exitAfterSave); });
+          const cancel = button('cancel', 'N No / ^C Cancel', cancelPrompt);
           actions.append(overwrite, cancel); panel.append(actions); cancel.focus();
-          report('The destination already exists.');
+          report('Y to overwrite, N or ^C to cancel');
           return;
         }
         saveTo(target, exitAfterSave);
@@ -240,33 +243,27 @@
       function close() {
         if (busy || closed) return;
         closed = true;
-        doc.removeEventListener('keydown', onKey, true);
-        doc.removeEventListener('focusin', trapFocus, true);
+        view.removeEventListener('keydown', onKey);
         window.removeEventListener('beforeunload', beforeUnload);
-        overlay.remove(); doc.body.style.overflow = oldOverflow;
-        background.forEach(function (entry) {
-          entry.node.inert = entry.inert;
-          if (!entry.inertAttr) entry.node.removeAttribute('inert');
-          if (entry.hidden == null) entry.node.removeAttribute('aria-hidden'); else entry.node.setAttribute('aria-hidden', entry.hidden);
-        });
-        active = false;
-        if (previousFocus && previousFocus.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
-        resolve(0);
-      }
-      function focusables() {
-        const region = prompt ? prompt.panel : dialog;
-        return Array.from(region.querySelectorAll('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),[tabindex="0"]')).filter(function (node) { return !node.hidden; });
-      }
-      function trapFocus(event) {
-        const region = prompt ? prompt.panel : dialog;
-        if (!region.contains(event.target)) {
-          const items = focusables();
-          if (items.length) items[0].focus();
+        try { unmount(); } finally {
+          active = false;
+          const root = term.root;
+          if (typeof term.focus === 'function' && (!root || (root.isConnected && !root.closest('[hidden]')))) term.focus();
+          resolve(0);
         }
       }
+
       function onKey(event) {
         if (closed) return;
         const key = event.key.toLowerCase();
+        if (prompt && !busy && !event.ctrlKey && !event.altKey && !event.metaKey && (prompt.kind === 'unsaved' || prompt.kind === 'overwrite') && (key === 'y' || key === 'n')) {
+          event.preventDefault(); event.stopPropagation();
+          const action = prompt.kind === 'unsaved' ? (key === 'y' ? 'save' : 'discard') : (key === 'y' ? 'overwrite' : 'cancel');
+          prompt.panel.querySelector('[data-editor-action="' + action + '"]').click(); return;
+        }
+        if (prompt && !busy && prompt.kind === 'filename' && event.key === 'Enter' && event.target.matches('[data-editor-filename]')) {
+          event.preventDefault(); event.stopPropagation(); prompt.panel.querySelector('form').requestSubmit(); return;
+        }
         if (prompt && (key === 'escape' || (event.ctrlKey && key === 'c'))) {
           event.preventDefault(); event.stopPropagation(); cancelPrompt(); return;
         }
@@ -287,10 +284,6 @@
             if (!inserted) { buffer.setRangeText('\t', buffer.selectionStart, buffer.selectionEnd, 'end'); buffer.dispatchEvent(new Event('input', { bubbles: true })); }
             update(); return;
           }
-          const items = focusables(), first = items[0], last = items[items.length - 1];
-          if (!items.length) { event.preventDefault(); return; }
-          if (event.shiftKey && (doc.activeElement === first || !dialog.contains(doc.activeElement))) { event.preventDefault(); last.focus(); }
-          else if (!event.shiftKey && (doc.activeElement === last || !dialog.contains(doc.activeElement))) { event.preventDefault(); first.focus(); }
         }
         // Escape in the main editor leaves the buffer open; only prompts are cancelled.
         if (!prompt && event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); }
@@ -303,8 +296,7 @@
       buffer.addEventListener('click', update);
       buffer.addEventListener('keyup', update);
       buffer.addEventListener('select', update);
-      doc.addEventListener('keydown', onKey, true);
-      doc.addEventListener('focusin', trapFocus, true);
+      view.addEventListener('keydown', onKey);
       window.addEventListener('beforeunload', beforeUnload);
       update();
       const readOnly = currentPath && isReadOnly(fs.get(currentPath));

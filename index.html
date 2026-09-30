@@ -127,12 +127,12 @@ awk '!/^#/ {print $1, $2, $4, $5}' results/calls.vcf</pre>
           </details>
           <details>
             <summary>Create and edit text files</summary>
-            <p>Type <code>nano notes.txt</code> to create a file, or use an existing file name to edit it. You can also select Text editor in Galaxy.</p>
+            <p>Type <code>nano notes.txt</code> to create a file, or use an existing file name to edit it. The editor opens inside the terminal. Selecting Text editor in Galaxy switches to the same terminal editor.</p>
             <pre>nano notes.txt
 cat notes.txt</pre>
-            <p>Use <kbd>Ctrl</kbd>+<kbd>O</kbd>, then <kbd>Enter</kbd>, to save. Use <kbd>Ctrl</kbd>+<kbd>X</kbd> to exit. Save and Exit buttons are also available. If you close the editor with unsaved changes, it asks whether to save or discard them.</p>
+            <p>Use <kbd>Ctrl</kbd>+<kbd>O</kbd>, then <kbd>Enter</kbd>, to save. Use <kbd>Ctrl</kbd>+<kbd>X</kbd> to exit. The shortcut labels at the bottom of the terminal are also clickable. If you exit with unsaved changes, press <kbd>Y</kbd> to save, <kbd>N</kbd> to discard, or <kbd>Ctrl</kbd>+<kbd>C</kbd> to keep editing.</p>
             <p>The editor is useful for notes, small FASTA files, BED regions and lists of file names. The Tab key inserts a tab character for tab-separated files. It supports UTF-8 text up to 2 MiB; compressed and binary files cannot be edited.</p>
-            <p>This browser editor uses nano-style controls. Type <code>nano --help</code> for its supported commands. Saved files are available to the terminal and Galaxy. Use Download work before reloading or closing the page to keep them.</p>
+            <p>When you exit, the command prompt and previous terminal output return. This browser editor uses nano-style controls. Type <code>nano --help</code> for its supported commands. Saved files are available to the terminal and Galaxy. Use Download work before reloading or closing the page to keep them.</p>
           </details>
           <details>
             <summary>Terminal commands</summary>

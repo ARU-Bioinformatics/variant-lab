@@ -87,7 +87,7 @@
     },
     {
       id: 'nano', group: 'Other commands', title: 'Text editor', tag: 'nano',
-      description: 'Create or edit a text file. Save with Ctrl+O and Enter, then exit with Ctrl+X. The editor uses the same files as the terminal. It supports UTF-8 text up to 2 MiB.',
+      description: 'Open the terminal editor to create or edit a text file. Save with Ctrl+O and Enter, then exit with Ctrl+X. It supports UTF-8 text up to 2 MiB.',
       fields: [path('filename', 'File to create or edit', 'notes.txt', { required: false, wide: true })],
       command: v => 'nano' + (v.filename.trim() ? ' -- ' + quote(v.filename) : '')
     },

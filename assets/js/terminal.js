@@ -48,9 +48,11 @@
       this.inputLine = h('div.term-inputline', this.promptEl, this.input);
       this.screen.append(this.outEl, this.inputLine);
       this.filesEl = h('aside.term-files', { hidden: true });
-      const body = h('div.term-body', this.screen, this.filesEl);
+      const body = this.body = h('div.term-body', this.screen, this.filesEl);
+      this.toolbar = bar;
       r.append(bar, body);
       this.screen.addEventListener('mouseup', () => {
+        if (this.editorView) return;
         const sel = window.getSelection();
         if (!sel || !String(sel)) this.input.focus({ preventScroll: true });
       });
@@ -75,7 +77,43 @@
       this.titleEl.textContent = `student@${this.hostname}: ${this.cwdPretty}`;
     }
     focus() {
-      this.input.focus({ preventScroll: true });
+      const target = this.editorView && (
+        this.editorView.querySelector('[data-editor-filename]:not(:disabled)') ||
+        this.editorView.querySelector('textarea:not(:disabled)') ||
+        this.editorView.querySelector('button:not(:disabled)')
+      );
+      (target || this.input).focus({ preventScroll: true });
+    }
+
+    /** Use the terminal's display for an interactive program, keeping its log. */
+    mountEditor(view) {
+      if (this.editorView) throw new Error('nano: a text editor is already open in this terminal.');
+      if (this.opts.onShowTerminal) this.opts.onShowTerminal();
+      const panes = Array.from(this.body.children).map(node => ({ node, hidden: node.hidden }));
+      const controls = Array.from(this.toolbar.querySelectorAll('button')).map(node => ({ node, disabled: node.disabled }));
+      const inputDisabled = this.input.disabled, status = this.statusEl.textContent;
+      const logScroll = this.screen.scrollTop;
+      this.editorView = view;
+      this.root.classList.add('editing');
+      panes.forEach(item => { item.node.hidden = true; });
+      controls.forEach(item => { item.node.disabled = true; });
+      this.input.disabled = true;
+      this.statusEl.textContent = 'editing';
+      this.body.append(view);
+      let mounted = true;
+      return () => {
+        if (!mounted) return;
+        mounted = false;
+        view.remove();
+        panes.forEach(item => { item.node.hidden = item.hidden; });
+        controls.forEach(item => { item.node.disabled = item.disabled; });
+        this.input.disabled = inputDisabled;
+        this.screen.scrollTop = logScroll;
+        this.statusEl.textContent = status;
+        this.root.classList.remove('editing');
+        this.editorView = null;
+        this.renderFiles();
+      };
     }
 
     /* ---------------- output ---------------- */
@@ -136,6 +174,7 @@
       this._progEl = null;
     }
     clear() {
+      if (this.editorView) { this.focus(); return; }
       this.outEl.innerHTML = '';
     }
     _scroll() {
@@ -314,6 +353,7 @@
 
     /* ---------------- files drawer ---------------- */
     toggleFiles(on) {
+      if (this.editorView) { this.focus(); return; }
       const show = on == null ? this.filesEl.hidden : on;
       this.filesEl.hidden = !show;
       this.filesBtn.classList.toggle('on', show);

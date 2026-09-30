@@ -41,7 +41,7 @@ The Example pipeline panel contains commands that students can edit. The Instruc
 | exactSNP / Subread | 2.0.1 | Genuine older WASM port by Junli Li, pinned to a source commit; isolated worker, one thread. Independent SNP-focused caller; reports some simple CIGAR indels. No sample GT field. |
 | awk, grep, sed | 5.1.0 / 3.7 / 4.8 | Genuine GNU WebAssembly tools operating on actual data. |
 | Text utilities | coreutils 8.32 | cat, head, tail, wc, sort, uniq, cut, tr, tee, comm, join, paste, seq. |
-| Text editor (`nano`) | JavaScript | Browser editor with nano-style save/exit controls. UTF-8 text up to 2 MiB; not the GNU nano executable. |
+| Text editor (`nano`) | JavaScript | Editor within the terminal, with nano-style save/exit controls. UTF-8 text up to 2 MiB; not the GNU nano executable. |
 | Shell and file UI | JavaScript | Quotes, simple globs, variables, pipes, `&&`, `||`, `;`, redirects, directory/file operations. `help` documents the exact supported surface. |
 | Galaxy interface | JavaScript | Teaching interface invoking the same tools, not a Galaxy server or workflow scheduler. |
 
@@ -60,13 +60,13 @@ These are deliberately small teaching subsets. Read extraction guided by an exis
 
 ## Creating and editing text files
 
-Run `nano notes.txt` in the terminal, or select **Text editor** in Galaxy. Existing files are loaded for editing; new files are created when saved. `nano` without a filename starts a blank document. Use quotes around names containing spaces, such as `nano "sample notes.txt"`.
+Run `nano notes.txt` in the terminal. The editor replaces the command display until you exit, then restores the prompt and previous output. Selecting **Text editor** in Galaxy switches to this terminal editor. Existing files are loaded for editing; new files are created when saved. `nano` without a filename starts a blank document. Use quotes around names containing spaces, such as `nano "sample notes.txt"`.
 
 - **Ctrl+O**, then **Enter**: save to the displayed filename. Change the name to save a separate copy.
-- **Ctrl+X**: exit. Unsaved changes prompt for Save, Discard or Cancel.
+- **Ctrl+X**: exit. At the unsaved-changes prompt, press **Y** to save, **N** to discard or **Ctrl+C** to keep editing.
 - **Tab**: insert a tab character, for example when making a BED or TSV file.
 
-The Save and Exit buttons provide the same actions. Standard text selection, copying, pasting and undo are provided by the browser. This is a JavaScript editor with a small set of nano-style controls, not a full GNU nano port. Use `nano --help` or `man nano` to see its supported features.
+The shortcut labels at the bottom of the terminal are also clickable. Standard text selection, copying, pasting and undo are provided by the browser. This is a JavaScript editor with a small set of nano-style controls, not a full GNU nano port. Use `nano --help` or `man nano` to see its supported features.
 
 Files must be UTF-8 text and at most 2 MiB. Binary and compressed files are rejected. Create parent directories with `mkdir` before saving into them. The editor runs interactively, so pipes and redirection are rejected before the pipeline runs. A command after `nano FILE && ...` waits until the editor closes. Saved files are immediately available to the terminal and Galaxy; use **Download work** to keep them after the tab closes.
 
@@ -110,7 +110,7 @@ Before teaching: serve the site, run both aligners and both caller programs on e
 - `index.html`, `assets/css/lab.css`, `assets/js/lab.js`: standalone page layout, instructions, notes and download controls.
 - `vfs.js`, `shell.js`, `terminal.js`, `tools-wasm.js`: real-file terminal/runtime adapted from the supplied practical.
 - `galaxy-lab.js`: editable tool forms, command preview and job history.
-- `editor.js`, `assets/css/editor.css`: terminal and Galaxy text editor.
+- `editor.js`, `assets/css/editor.css`: text editor displayed within the terminal.
 - `compare.js`: VCF validation, overlap, genotype comparison and export.
 - `exactsnp.js`, `assets/vendor/exactsnp/`: independent caller worker and licensed corresponding source.
 - `data/`, `build/`: read extraction scripts, data sources, FASTQ and reference files, and prebuilt indexes.

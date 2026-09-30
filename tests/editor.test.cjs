@@ -10,7 +10,7 @@ const root = path.resolve(__dirname, '..');
 const failures = [];
 const virtualConsole = new VirtualConsole();
 virtualConsole.on('jsdomError', error => failures.push(error.message));
-const dom = new JSDOM('<!doctype html><html><head></head><body><button id="origin">Open editor</button></body></html>', {
+const dom = new JSDOM('<!doctype html><html><head></head><body><button id="origin">Outside terminal</button><div id="terminal-fixture"></div></body></html>', {
   url: 'http://variant-lab.test/', runScripts: 'outside-only', pretendToBeVisual: true, virtualConsole,
   beforeParse(w) {
     w.TextEncoder = TextEncoder; w.TextDecoder = TextDecoder; w.Blob = Blob;
@@ -18,19 +18,20 @@ const dom = new JSDOM('<!doctype html><html><head></head><body><button id="origi
   }
 });
 const w = dom.window;
-for (const name of ['core', 'icons', 'vfs', 'shell', 'editor']) {
+for (const name of ['core', 'icons', 'vfs', 'shell', 'terminal', 'editor']) {
   w.eval(fs.readFileSync(path.join(root, 'assets/js', name + '.js'), 'utf8'));
 }
 const MG = w.MG;
 const doc = w.document;
 const checks = [];
+let term;
 const assertBytes = (actual, expected) => assert.deepEqual(Array.from(actual), Array.from(expected));
 const tick = () => new Promise(resolve => setTimeout(resolve, 0));
 async function waitFor(find, message = 'expected editor state') {
   for (let i = 0; i < 100; i++) { const result = find(); if (result) return result; await tick(); }
   throw new Error(message);
 }
-const editor = () => doc.querySelector('.nano-overlay [role="dialog"][aria-label="Text editor"]');
+const editor = () => doc.querySelector('.nano-terminal[role="region"][aria-label="Text editor"]');
 const prompt = kind => doc.querySelector(`[data-editor-prompt="${kind}"]`);
 const button = (action, scope = editor()) => {
   const found = scope?.querySelector(`[data-editor-action="${action}"]`);
@@ -44,16 +45,58 @@ function type(text) {
 function key(target, key, extra = {}) {
   target.dispatchEvent(new w.KeyboardEvent('keydown', {key, bubbles: true, cancelable: true, ...extra}));
 }
+function snapshotTerminal() {
+  return {
+    bodyChildren: Array.from(doc.body.children), bodyAttributes: Array.from(doc.body.attributes, a => [a.name, a.value]),
+    outsideAttributes: Array.from(doc.querySelector('#origin').attributes, a => [a.name, a.value]),
+    screenHidden: term.screen.hidden, filesHidden: term.filesEl.hidden, inputDisabled: term.input.disabled,
+    scrollTop: term.screen.scrollTop, status: term.statusEl.textContent,
+    toolbar: Array.from(term.root.querySelectorAll('.term-bar button'), node => [node, node.disabled]),
+    historyText: term.outEl.textContent, historyNodes: Array.from(term.outEl.childNodes)
+  };
+}
+function assertOutsideUnchanged(before) {
+  assert.deepEqual(Array.from(doc.body.children), before.bodyChildren, 'Editor adds no body-level surface');
+  assert.deepEqual(Array.from(doc.body.attributes, a => [a.name, a.value]), before.bodyAttributes, 'Body attributes/styles remain unchanged');
+  assert.deepEqual(Array.from(doc.querySelector('#origin').attributes, a => [a.name, a.value]), before.outsideAttributes, 'Outside controls are not made inert or hidden');
+  assert.notEqual(doc.querySelector('#origin').inert, true);
+  assert.equal(doc.querySelector('.nano-overlay,[role="dialog"],[aria-modal="true"]'), null, 'No popup/dialog is created');
+}
+function assertMounted(before) {
+  const view = editor(); assert(view);
+  assert.equal(view.closest('.term-body'), term.root.querySelector('.term-body'), 'Editor belongs to the terminal body');
+  assert.equal(term.screen.hidden, true, 'Command log and input are hidden while editing');
+  assert.equal(term.filesEl.hidden, true, 'File drawer is hidden while editing');
+  assert.equal(term.input.disabled, true, 'Command input is disabled while editing');
+  assert.equal(term.editorView, view);
+  for (const [node] of before.toolbar) assert.equal(node.disabled, true, 'Toolbar cannot clear or replace the editor');
+  assert.equal(term.outEl.textContent, before.historyText, 'Scrollback remains intact behind the editor');
+  for (const node of before.historyNodes) assert.equal(node.parentNode, term.outEl, 'History DOM is retained');
+  assertOutsideUnchanged(before);
+}
+function assertRestored(before) {
+  assert.equal(editor(), null);
+  assert.equal(term.screen.hidden, before.screenHidden, 'Command log/input visibility is restored');
+  assert.equal(term.filesEl.hidden, before.filesHidden, 'Previous file-drawer visibility is restored');
+  assert.equal(term.input.disabled, before.inputDisabled); assert.equal(term.editorView, null);
+  assert.equal(term.screen.scrollTop, before.scrollTop); assert.equal(term.statusEl.textContent, before.status);
+  for (const [node, disabled] of before.toolbar) assert.equal(node.disabled, disabled, 'Toolbar state is restored');
+  assert.equal(term.outEl.textContent, before.historyText, 'Exiting does not erase history');
+  for (const node of before.historyNodes) assert.equal(node.parentNode, term.outEl);
+  assertOutsideUnchanged(before);
+}
 async function open(vfs, filename) {
-  let done = false;
-  const completion = MG.openTextEditor({fs: vfs, path: filename}).then(code => { done = true; return code; });
-  await waitFor(editor, 'Editor did not open');
+  let done = false; term.input.focus();
+  const before = snapshotTerminal();
+  const completion = MG.openTextEditor({fs: vfs, path: filename, term}).then(code => { done = true; assertRestored(before); return code; });
+  await waitFor(editor, 'Editor did not open'); assertMounted(before);
   return {completion, isDone: () => done, buffer: editor().querySelector('.nano-buffer')};
 }
 async function saveAs(name, shortcut = false) {
   if(shortcut) key(editor().querySelector('.nano-buffer'), 'o', {ctrlKey: true}); else button('save').click(); const box = await waitFor(() => prompt('filename'));
   const input = box.querySelector('[data-editor-filename]'); input.value = name;
-  input.dispatchEvent(new w.Event('input', {bubbles: true})); button('confirm-save', box).click(); await tick();
+  input.dispatchEvent(new w.Event('input', {bubbles: true}));
+  if (shortcut) key(input, 'Enter'); else button('confirm-save', box).click(); await tick();
 }
 async function cancelPrompts() {
   for (let i = 0; i < 3; i++) {
@@ -69,8 +112,15 @@ async function closeClean(handle) {
 async function check(label, test) { await test(); checks.push(label); console.log('PASS:', label); }
 (async () => {
   const vfs = new MG.VFS(); vfs.mkdirp('work');
+  term = new MG.TerminalUI(doc.querySelector('#terminal-fixture'), {fs: vfs, welcome: 'Existing terminal history'});
+  term.out('previous output\n'); term.toggleFiles(true);
+  const toolbar = term.root.querySelectorAll('.term-bar button'); toolbar[toolbar.length - 1].disabled = true;
   await check('create, save and reopen UTF-8 text in the shared filesystem', async () => {
     const h = await open(vfs, 'work/new notes.txt');
+    const before = term.outEl.textContent; term.clear(); term.toggleFiles(true);
+    assert.equal(term.outEl.textContent, before, 'Clear cannot erase history while the editor is active');
+    assert.equal(term.filesEl.hidden, true, 'The file drawer cannot replace an active editor');
+    assert.equal(doc.activeElement, h.buffer, 'Terminal focus is routed to the editor');
     assert.equal(vfs.exists('work/new notes.txt'), false, 'Opening a new buffer does not write it');
     type('café ΔNA\n'); assert.equal(editor().dataset.editorDirty, 'true');
     await saveAs('work/new notes.txt', true); await waitFor(() => !prompt('filename'));
@@ -91,7 +141,7 @@ async function check(label, test) { await test(); checks.push(label); console.lo
     button('exit').click(); box = await waitFor(() => prompt('unsaved')); button('discard', box).click();
     assert.equal(await h.completion, 0); assertBytes(await vfs.readBytes('work/preserve.txt'), original);
     const fresh = await open(vfs, 'work/discarded.txt'); type('do not write'); button('exit').click();
-    box = await waitFor(() => prompt('unsaved')); button('discard', box).click(); await fresh.completion;
+    box = await waitFor(() => prompt('unsaved')); key(box, 'n'); await fresh.completion;
     assert.equal(vfs.exists('work/discarded.txt'), false);
   });
   await check('save-as overwrite requires confirmation and preserves the source', async () => {
@@ -100,7 +150,7 @@ async function check(label, test) { await test(); checks.push(label); console.lo
     await saveAs('work/target.txt'); let box = await waitFor(() => prompt('overwrite'));
     assert.equal(await vfs.readText('work/target.txt'), 'target\n'); button('cancel', box).click(); await tick();
     assert.equal(await vfs.readText('work/target.txt'), 'target\n'); await cancelPrompts();
-    await saveAs('work/target.txt'); box = await waitFor(() => prompt('overwrite')); button('overwrite', box).click();
+    await saveAs('work/target.txt'); box = await waitFor(() => prompt('overwrite')); key(box, 'y');
     await waitFor(() => !prompt('overwrite') && !prompt('filename'));
     assert.equal(await vfs.readText('work/target.txt'), 'replacement\n');
     assert.equal(await vfs.readText('work/source.txt'), 'source\n'); await closeClean(h);
@@ -116,10 +166,10 @@ async function check(label, test) { await test(); checks.push(label); console.lo
   await check('invalid UTF-8, binary files and missing parent paths are rejected without writes', async () => {
     for (const [name, bytes] of [['invalid.txt', [0x61, 0xc3, 0x28]], ['binary.bin', [0x00, 0x42, 0x41, 0x4d]], ['compressed.gz', [0x1f, 0x8b, 0x08, 0x00]]]) {
       const original = new Uint8Array(bytes); vfs.put('work/' + name, {kind: 'blob', blob: new Blob([original])});
-      await assert.rejects(MG.openTextEditor({fs: vfs, path: 'work/' + name}), /nano:|UTF-8|binary|compressed/i);
+      await assert.rejects(MG.openTextEditor({fs: vfs, path: 'work/' + name, term}), /UTF-8|binary|compressed/i);
       assert.equal(editor(), null); assertBytes(await vfs.readBytes('work/' + name), original);
     }
-    await assert.rejects(MG.openTextEditor({fs: vfs, path: 'missing/new.txt'}), /directory|parent|exist/i);
+    await assert.rejects(MG.openTextEditor({fs: vfs, path: 'missing/new.txt', term}), /directory|parent|exist/i);
     assert.equal(vfs.exists('missing'), false);
     const h = await open(vfs, 'work/source.txt'); type('keep buffer\n'); await saveAs('missing/output.txt');
     await waitFor(() => editor()?.querySelector('[data-editor-error="true"]'));
@@ -134,7 +184,7 @@ async function check(label, test) { await test(); checks.push(label); console.lo
   });
   await check('nano blocks a command chain until exit; quoted paths and literal tabs reach cat', async () => {
     assert.equal(typeof MG.shellBuiltins.nano, 'function');
-    const shell = new MG.Shell({fs: vfs}); let out = '', err = '', done = false;
+    const shell = new MG.Shell({fs: vfs, term}); let out = '', err = '', done = false;
     const pending = shell.run('nano "work/regions with spaces.bed" && cat "work/regions with spaces.bed"', {out: text => { out += text; }, err: text => { err += text; }, note() {}}).then(code => { done = true; return code; });
     await waitFor(editor); assert.equal(done, false); assert.equal(out, '');
     const buffer = type('yeast_chrM'); key(buffer, 'Tab');
@@ -151,7 +201,7 @@ async function check(label, test) { await test(); checks.push(label); console.lo
       let finished = false;
       const pendingGuard = shell.run(command, {out() {}, err() {}, note() {}}).then(code => { finished = true; return code; });
       await waitFor(() => finished || editor(), 'Interactive command guard did not finish');
-      assert.equal(editor(), null, 'Rejected interactive syntax does not open a modal: ' + command);
+      assert.equal(editor(), null, 'Rejected interactive syntax does not open an editor: ' + command);
       const status = await pendingGuard;
       assert.notEqual(status, 0, 'Interactive editor rejects pipelines/redirections'); assert.equal(editor(), null);
       assert.equal(await vfs.readText('work/valuable.txt'), 'preserve me\n', 'Preflight runs before any destructive stage or redirection');
