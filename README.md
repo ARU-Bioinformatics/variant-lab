@@ -20,6 +20,7 @@ The uncompressed project is approximately 30 MB. A desktop/laptop browser is rec
 ## Features
 
 - Inspect, edit, filter and combine FASTQ, FASTA, SAM, BAM and VCF files.
+- Create and edit text files with `nano FILE` or the Galaxy Text editor tool.
 - Select **minimap2 or Bowtie2** and run either on either dataset.
 - Feed any resulting BAM to **bcftools** or **exactSNP**. Within bcftools, compare the **multiallelic** and **consensus** calling algorithms.
 - Use terminal commands, Galaxy-style forms, or both, with one shared filesystem.
@@ -40,6 +41,7 @@ The Example pipeline panel contains commands that students can edit. The Instruc
 | exactSNP / Subread | 2.0.1 | Genuine older WASM port by Junli Li, pinned to a source commit; isolated worker, one thread. Independent SNP-focused caller; reports some simple CIGAR indels. No sample GT field. |
 | awk, grep, sed | 5.1.0 / 3.7 / 4.8 | Genuine GNU WebAssembly tools operating on actual data. |
 | Text utilities | coreutils 8.32 | cat, head, tail, wc, sort, uniq, cut, tr, tee, comm, join, paste, seq. |
+| Text editor (`nano`) | JavaScript | Browser editor with nano-style save/exit controls. UTF-8 text up to 2 MiB; not the GNU nano executable. |
 | Shell and file UI | JavaScript | Quotes, simple globs, variables, pipes, `&&`, `||`, `;`, redirects, directory/file operations. `help` documents the exact supported surface. |
 | Galaxy interface | JavaScript | Teaching interface invoking the same tools, not a Galaxy server or workflow scheduler. |
 
@@ -55,6 +57,18 @@ Both datasets contain public sequencing reads. No variants have been added.
 See [dataset provenance](data/DATASETS.md), `data/manifest.json`, the per-dataset provenance records and the extraction scripts in `build/` for exact counts, reference coordinates, checksums, filters and source URLs. Human reference slices use local contig coordinates. Yeast mitochondrial copy number is not sample ploidy; the initial haploid caller setting is a modeling assumption, not proof of homoplasmy.
 
 These are deliberately small teaching subsets. Read extraction guided by an existing alignment favours reads that mapped under that alignment method. Small reference slices omit competing mappings elsewhere in the genome. Mates can map outside the retained reference or remain unmapped. These restrictions are part of the discussion, not grounds for treating one small-reference pipeline as a biological truth standard.
+
+## Creating and editing text files
+
+Run `nano notes.txt` in the terminal, or select **Text editor** in Galaxy. Existing files are loaded for editing; new files are created when saved. `nano` without a filename starts a blank document. Use quotes around names containing spaces, such as `nano "sample notes.txt"`.
+
+- **Ctrl+O**, then **Enter**: save to the displayed filename. Change the name to save a separate copy.
+- **Ctrl+X**: exit. Unsaved changes prompt for Save, Discard or Cancel.
+- **Tab**: insert a tab character, for example when making a BED or TSV file.
+
+The Save and Exit buttons provide the same actions. Standard text selection, copying, pasting and undo are provided by the browser. This is a JavaScript editor with a small set of nano-style controls, not a full GNU nano port. Use `nano --help` or `man nano` to see its supported features.
+
+Files must be UTF-8 text and at most 2 MiB. Binary and compressed files are rejected. Create parent directories with `mkdir` before saving into them. The editor runs interactively, so pipes and redirection are rejected before the pipeline runs. A command after `nano FILE && ...` waits until the editor closes. Saved files are immediately available to the terminal and Galaxy; use **Download work** to keep them after the tab closes.
 
 ## Comparing variants
 
@@ -83,6 +97,7 @@ No reads or variants are uploaded. Tools, comparisons and file imports run local
 
 - Dataset integrity: source archive/sample identification, paired FASTQ names/lengths/qualities, source and subset checksums, reference/index consistency, and documented read selection. See `data/DATASETS.md` and per-dataset provenance/validation files.
 - Comparison tests: `node --test tests/compare.test.cjs`.
+- Text editor tests: `cd tests && npm install && npm run test:editor`. Checks saving, cancelling, file formats and shell integration.
 - Actual bundled WASM execution tests: `node tests/runtime.test.cjs`. A minimal Worker/browser API shim executes the real binaries; results are not mocked. The default test derives its inputs from the real-data manifest and covers both minimap2 pipelines, both bcftools models, and bounded Bowtie2 paired-read runs. Full paired Bowtie2 validation was not completed here because it is slow. See `tests/runtime-results.json` for measured outcomes; these are test conditions, not promised practical answers.
 - Independent caller integration: `node tests/exactsnp.test.cjs` executes genuine exactSNP on a known 50% SNP, then normalizes its real VCF with bcftools. Metadata completion preserves native records; evidence is in `tests/exactsnp-results.json`.
 - DOM integration: `cd tests && npm install && npm run test:ui` (Node 24). Covers initialization, tabs, shared output files, dataset switching, recipes, saved notes and experiment export; it does not render a browser layout.
@@ -95,6 +110,7 @@ Before teaching: serve the site, run both aligners and both caller programs on e
 - `index.html`, `assets/css/lab.css`, `assets/js/lab.js`: standalone page layout, instructions, notes and download controls.
 - `vfs.js`, `shell.js`, `terminal.js`, `tools-wasm.js`: real-file terminal/runtime adapted from the supplied practical.
 - `galaxy-lab.js`: editable tool forms, command preview and job history.
+- `editor.js`, `assets/css/editor.css`: terminal and Galaxy text editor.
 - `compare.js`: VCF validation, overlap, genotype comparison and export.
 - `exactsnp.js`, `assets/vendor/exactsnp/`: independent caller worker and licensed corresponding source.
 - `data/`, `build/`: read extraction scripts, data sources, FASTQ and reference files, and prebuilt indexes.

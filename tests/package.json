@@ -1,7 +1,8 @@
 {
   "private": true,
   "scripts": {
-    "test:ui": "node ui.test.cjs"
+    "test:ui": "node ui.test.cjs",
+    "test:editor": "node editor.test.cjs"
   },
   "devDependencies": {
     "jsdom": "30.1.1"

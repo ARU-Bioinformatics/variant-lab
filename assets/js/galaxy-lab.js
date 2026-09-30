@@ -86,6 +86,12 @@
       command: v => 'bcftools filter -i ' + quote(v.expression) + extra(v) + ' -Ov -o ' + quote(v.out) + ' ' + quote(v.input)
     },
     {
+      id: 'nano', group: 'Other commands', title: 'Text editor', tag: 'nano',
+      description: 'Create or edit a text file. Save with Ctrl+O and Enter, then exit with Ctrl+X. The editor uses the same files as the terminal. It supports UTF-8 text up to 2 MiB.',
+      fields: [path('filename', 'File to create or edit', 'notes.txt', { required: false, wide: true })],
+      command: v => 'nano' + (v.filename.trim() ? ' -- ' + quote(v.filename) : '')
+    },
+    {
       id: 'custom', group: 'Other commands', title: 'Custom command', tag: 'Shell',
       description: 'Run a shell command. Type help in the terminal for available commands and supported syntax. Files are shared with the terminal and other tools.',
       fields: [field('command', 'Command', base => 'ls -lh ' + quote(base), { type: 'textarea', wide: true })],

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="assets/css/app.css">
   <link rel="stylesheet" href="assets/css/genomics.css">
   <link rel="stylesheet" href="assets/css/lab.css">
+  <link rel="stylesheet" href="assets/css/editor.css">
 </head>
 <body data-page="variant-lab">
   <header class="masthead">
@@ -125,6 +126,15 @@ awk '!/^#/ {print $1, $2, $4, $5}' results/calls.vcf</pre>
             <p>Run times depend on the browser build and your computer. They should not be used to rank the speed of the standard installed programs. The small reference sequences also leave out possible alignments elsewhere in the genome, which can affect mapping quality.</p>
           </details>
           <details>
+            <summary>Create and edit text files</summary>
+            <p>Type <code>nano notes.txt</code> to create a file, or use an existing file name to edit it. You can also select Text editor in Galaxy.</p>
+            <pre>nano notes.txt
+cat notes.txt</pre>
+            <p>Use <kbd>Ctrl</kbd>+<kbd>O</kbd>, then <kbd>Enter</kbd>, to save. Use <kbd>Ctrl</kbd>+<kbd>X</kbd> to exit. Save and Exit buttons are also available. If you close the editor with unsaved changes, it asks whether to save or discard them.</p>
+            <p>The editor is useful for notes, small FASTA files, BED regions and lists of file names. The Tab key inserts a tab character for tab-separated files. It supports UTF-8 text up to 2 MiB; compressed and binary files cannot be edited.</p>
+            <p>This browser editor uses nano-style controls. Type <code>nano --help</code> for its supported commands. Saved files are available to the terminal and Galaxy. Use Download work before reloading or closing the page to keep them.</p>
+          </details>
+          <details>
             <summary>Terminal commands</summary>
             <p>Type <code>help</code> for the available commands. The terminal supports pipes, input and output redirection, quoted arguments, simple filename patterns, variables and command chaining. You can use <code>awk</code>, <code>grep</code>, <code>sed</code> and other text utilities to process your files.</p>
             <p>Shell loops, process substitution, background processes, package installation and arbitrary executables are not supported.</p>
@@ -154,6 +164,7 @@ awk '!/^#/ {print $1, $2, $4, $5}' results/calls.vcf</pre>
   <script src="assets/js/vfs.js"></script>
   <script src="assets/js/shell.js"></script>
   <script src="assets/js/terminal.js"></script>
+  <script src="assets/js/editor.js"></script>
   <script src="assets/js/tools-wasm.js"></script>
   <script src="assets/js/exactsnp.js"></script>
   <script src="assets/js/compare.js"></script>

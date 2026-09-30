@@ -233,18 +233,30 @@
     }
 
     async runPipeline(pipeline, io, rawLine) {
+      // Resolve filename patterns once, so preflight checks the command that
+      // will actually run, including a command name supplied by a pattern.
+      pipeline = pipeline.map(command => {
+        const argv = [];
+        command.argv.forEach((word, i) => argv.push(...(command.globs[i] ? this.fs.glob(word) : [word])));
+        return Object.assign({}, command, { argv, globs: [] });
+      });
+      // Interactive tools must be checked before any stage or redirection runs.
+      // Otherwise a rejected editor command could truncate a redirected file.
+      for (const command of pipeline) {
+        const name = command.argv.find(word => !/^[A-Za-z_]\w*=/.test(word));
+        const tool = MG.shellBuiltins[name] || MG.shellTools[name];
+        if (tool?.interactive && (pipeline.length > 1 || command.redirs.length)) {
+          io.err(`${name}: interactive editing does not support pipes or redirection. Use ${name} FILE.\n`);
+          return 2;
+        }
+      }
       let stdin = null;
       let code = 0;
       for (let s = 0; s < pipeline.length; s++) {
         if(this.term?.cancelled)return 130;
         const cmd = pipeline[s];
         const last = s === pipeline.length - 1;
-        // glob expansion
-        let argv = [];
-        cmd.argv.forEach((a, i) => {
-          if (cmd.globs[i]) argv = argv.concat(this.fs.glob(a));
-          else argv.push(a);
-        });
+        let argv = cmd.argv.slice();
         // stdin redirect
         const inR = cmd.redirs.find((r) => r.op === '<');
         if (inR) {
@@ -523,6 +535,28 @@
      Builtins (JavaScript versions of common Unix commands)
      ------------------------------------------------------------------ */
   const B = {};
+
+  B.nano = async (ctx) => {
+    if (ctx.args.length === 1 && ['-h', '--help'].includes(ctx.args[0])) {
+      ctx.out(BUILTIN_MAN.nano + '\n');
+      return 0;
+    }
+    if (ctx.args.length === 1 && ctx.args[0] === '--version') {
+      ctx.out('Browser text editor 1.0 (nano-style controls; JavaScript)\n');
+      return 0;
+    }
+    const args = ctx.args.slice();
+    const literal = args[0] === '--';
+    if (literal) args.shift();
+    if (args.length > 1 || (!literal && args[0]?.startsWith('-'))) {
+      throw userErr('nano: use nano [FILE], nano --help, or nano -- FILE for a name beginning with -', 2);
+    }
+    if (args.length && !args[0]) throw userErr('nano: filename cannot be empty', 2);
+    if (typeof MG.openTextEditor !== 'function') throw userErr('nano: the browser editor is not available');
+    try { return await MG.openTextEditor({ fs: ctx.fs, path: args[0] }); }
+    catch (error) { throw userErr(error.message?.startsWith('nano:') ? error.message : 'nano: ' + error.message); }
+  };
+  B.nano.interactive = true;
 
   B.pwd = (ctx) => ctx.out(ctx.fs.cwd + '\n');
   B.cd = (ctx) => {
@@ -1202,6 +1236,10 @@
         'Compiled tools:',
         ...tools,
         '',
+        'Text editor:',
+        '  nano [FILE]    create or edit a text file; Ctrl+O saves, Ctrl+X exits',
+        '  This browser editor supports UTF-8 text up to 2 MiB. Use it without pipes or redirection.',
+        '',
         'Unix commands:',
         '  ls, cd, pwd, mkdir, cp, mv, rm, less, zcat, file, tree, history, clear',
         '  Text commands use GNU programs compiled to run in this browser.',
@@ -1225,6 +1263,7 @@
     throw userErr(`No manual entry for ${name}`);
   };
   const BUILTIN_MAN = {
+    nano: 'nano [FILE]   create or edit a UTF-8 text file (up to 2 MiB).\nCtrl+O: choose a filename, then Enter to save. Ctrl+X: exit; unsaved edits prompt before closing.\nTab inserts a tab character. Save and Exit buttons provide the same actions.\nUse mkdir first if the parent directory does not exist. Pipes and redirection are not supported.\nThis is a browser editor with nano-style controls, not GNU nano. Files stay in the current tab; use Download work to keep them.',
     ls: 'ls [-l] [-h] [-a] [DIR]   list files (-l long format, -h human-readable sizes)',
     head: 'head [-n N] FILE           print the first N lines (default 10)',
     tail: 'tail [-n N] FILE           print the last N lines (default 10)',
