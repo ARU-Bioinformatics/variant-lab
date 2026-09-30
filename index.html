@@ -1,14 +1,163 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="An open-ended variant calling laboratory. Compare real browser alignments and variant calls on human and yeast teaching data."><title>Variant Lab · An open experiment</title><link rel="stylesheet" href="assets/css/genomics.css"><link rel="stylesheet" href="assets/css/lab.css"></head>
-<body data-page="variant-lab"><header class="masthead"><a class="brand" href="./"><span class="brand-icon" aria-hidden="true">⌘</span><span>VARIANT<span class="brand-light"> LAB</span></span><span class="edition">BIOINFORMATICS PRACTICAL</span></a><div class="top-actions"><span class="local-badge"><i></i> Computed in your browser</span><button id="exportSession" class="quiet">Export experiment ↓</button></div></header>
-<main><aside class="brief"><div class="eyebrow">THE EXPERIMENT</div><h1>Same reads.<br>Different answers?</h1><p class="intro">Build a variant-calling pipeline. Change one decision. Investigate what changes.</p><label class="field-label" for="datasetSelect">01 / CHOOSE YOUR DATA</label><select id="datasetSelect" disabled><option>Loading datasets…</option></select><div id="datasetInfo" class="dataset-info" aria-live="polite"></div><div class="dataset-actions"><label class="button quiet import">Import local files<input type="file" id="fileImport" multiple hidden></label><button class="quiet" id="showFiles">Browse files</button></div><div class="brief-rule"></div><div class="field-label">02 / ASK A QUESTION</div><p class="question">Which decisions have the largest effect on your final variant set?</p><ul class="prompts"><li>Hold the caller fixed. Change the aligner.</li><li>Hold the alignment fixed. Change the calling model.</li><li>Change evidence thresholds or ploidy.</li><li>Explain a disagreement using the reads.</li></ul><button class="text-button" data-tab="guide">Read the practical brief ↗</button><div class="brief-rule"></div><div class="field-label">03 / KEEP THE EVIDENCE</div><label for="notebook" class="note-label">Your hypothesis, parameters and observations</label><textarea id="notebook" rows="5" placeholder="I predict… because…&#10;I changed… and observed…"></textarea><p class="small muted">Notes save in this browser. Files live in this tab; export before reloading.</p><div class="source-note">Real sequencing reads · documented public accessions<br><a href="data/DATASETS.md" target="_blank" rel="noopener">Dataset provenance</a> · <a href="README.md" target="_blank" rel="noopener">Technical notes</a></div></aside>
-<section class="workspace" aria-label="Variant analysis workspace"><div class="workspace-top"><div><span class="eyebrow">OPEN WORKBENCH</span><h2 id="workspaceTitle">Build, inspect, compare.</h2></div><div id="busyStatus" role="status">Preparing workspace…</div></div><nav class="tabs" aria-label="Workbench views"><button class="active" data-tab="terminal" aria-current="page"><span>01</span> Terminal</button><button data-tab="galaxy"><span>02</span> Galaxy</button><button data-tab="compare"><span>03</span> Compare</button><button data-tab="guide"><span>04</span> Field guide</button></nav>
-<section id="terminalPanel" class="panel active"><div class="command-strip"><div><b>Your command line, your choices.</b><span>↑ history · Tab completion · pipes and redirects</span></div><button id="exampleButton" class="quiet">Insert starter commands</button></div><div id="termRoot"></div><details class="recipe"><summary>Pipeline scratchpad <span>Editable commands • run one line or the whole block</span></summary><textarea id="scriptEditor" spellcheck="false" aria-label="Editable pipeline commands"></textarea><div class="recipe-footer"><select id="recipeAligner" aria-label="Starter aligner"><option value="minimap2">minimap2</option><option value="bowtie2">Bowtie2</option></select><select id="recipeCaller" aria-label="Starter caller"><option value="multiallelic">bcftools · multiallelic</option><option value="consensus">bcftools · consensus</option><option value="exactSNP">exactSNP · independent caller</option></select><button id="refreshRecipe" class="quiet">Regenerate</button><button id="runScript" class="primary">Run edited commands →</button></div></details><div class="runtime-note">Real tools and real files. The browser shell supports a documented subset of Bash; see the field guide for available commands.</div></section>
-<section id="galaxyPanel" class="panel" hidden><div id="galaxyRoot"></div></section>
-<section id="comparePanel" class="panel light-panel" hidden><div class="section-heading"><span class="eyebrow">FOLLOW THE DISAGREEMENTS</span><h3>Compare the variants, not just the counts.</h3><p>Choose two VCFs from the shared workspace. Each is split and left-aligned against the selected reference with <code>bcftools norm</code> before comparison.</p></div><div class="compare-controls"><label>Call set A<select id="compareA"><option value="">Run a caller or import a VCF</option></select></label><label>Call set B<select id="compareB"><option value="">Run a caller or import a VCF</option></select></label><label>Minimum QUAL<input id="compareQual" type="number" min="0" placeholder="No filter"></label><label class="checkbox"><input id="comparePass" type="checkbox"> PASS only</label><label class="checkbox"><input id="compareSameSample" type="checkbox"> Treat the two single-sample files as the same sample</label><button id="compareButton" class="primary">Compare call sets →</button></div><p class="small muted">PASS excludes unfiltered “.” records. Caller quality scales and variant models differ. Do not assume equal numerical QUAL thresholds are equivalent; filter each caller separately when needed.</p><div id="comparisonResult" class="comparison-result"><div class="empty-state"><div class="empty-glyph" aria-hidden="true">A ∩ B</div><h4>Every disagreement is a place to look.</h4><p>Run two pipelines or import their VCFs. You’ll see shared alleles, unique calls and genotype agreement. Inspect disagreements in the read evidence: agreement between callers does not establish accuracy.</p><button class="text-button" data-tab="galaxy">Build your first pipeline ↗</button></div></div></section>
-<section id="guidePanel" class="panel light-panel" hidden><article class="guide"><div class="eyebrow">A PRACTICAL WITH MORE THAN ONE ROUTE</div><h3>Design a fair comparison.</h3><p>Work in pairs or small groups. Your aim is to explain why two pipelines disagree, using the evidence in their outputs. There is no required sequence of buttons and no single winning pipeline.</p><div class="guide-grid"><section><h4>1. Make a prediction</h4><p>Choose human loci or yeast mitochondria. Decide what you will vary and what you will hold constant. Predict where errors or disagreements might occur: low coverage, repeats, indels, low base quality or the mitochondrial origin.</p></section><section><h4>2. Build two pipelines</h4><p>Use the terminal, the Galaxy-style forms, or both. Both use the same files and execution engine. Choose an aligner, sort the SAM to BAM, index it, then call variants. Names are yours to choose; avoid overwriting a result you still need.</p></section><section><h4>3. Compare fairly</h4><p>Use the same reads, reference, region, filters and ploidy unless that is your experimental variable. Normalize before comparing. Check the actual alleles and genotypes, not only the number of VCF rows. Agreement is not proof of accuracy.</p></section><section><h4>4. Explain one difference</h4><p>Inspect the BAM with <code>samtools view</code>, <code>depth</code> or <code>mpileup</code>. Use <code>bcftools query</code> to inspect allele depths and quality. Is a unique call supported by both strands? Could alignment or a repeat explain it?</p></section></div><details open><summary>Start with a small experiment</summary><p>The scratchpad provides an editable starting pipeline, not a prescribed answer. Try minimap2 and Bowtie2 with the same bcftools model, then use the same BAM with multiallelic and consensus calling. exactSNP offers a separate SNP-focused algorithm and can also report simple CIGAR indels. It supplies no sample genotype field. Its SNP QUAL is capped −log10(p), not Phred; simple indels receive QUAL=1. Do not reuse a numerical bcftools QUAL cutoff.</p><pre>samtools flagstat results/alignment.bam
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A bioinformatics practical comparing aligners and variant callers using human exome and yeast mitochondrial sequencing data.">
+  <title>Variant calling practical</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310263a'/%3E%3Cpath d='M6 9h20M6 16h20M6 23h20' stroke='%233fb7a0' stroke-width='2.4' stroke-linecap='round'/%3E%3Ccircle cx='19' cy='16' r='3.4' fill='%23f28e2b'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/genomics.css">
+  <link rel="stylesheet" href="assets/css/lab.css">
+</head>
+<body data-page="variant-lab">
+  <header class="masthead">
+    <a class="brand" href="./">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#17344d"/><path d="M6 9h20M6 16h20M6 23h20" stroke="#3fb7a0" stroke-width="2.4" stroke-linecap="round"/><circle cx="19" cy="16" r="3.4" fill="#f28e2b"/></svg>
+      <div><div class="brand-title">Variant calling</div><div class="brand-sub">Genomic variant analysis practical</div></div>
+    </a>
+    <div class="top-actions"><button id="exportSession" class="quiet">Download work</button></div>
+  </header>
+
+  <main>
+    <aside class="brief" aria-label="Practical overview">
+      <h1>Variant calling</h1>
+      <p class="intro">Align sequencing reads and call variants. Compare the results from different tools and settings.</p>
+      <label class="field-label" for="datasetSelect">Dataset</label>
+      <select id="datasetSelect" disabled><option>Loading datasets…</option></select>
+      <div id="datasetInfo" class="dataset-info" aria-live="polite"></div>
+      <div class="dataset-actions">
+        <label class="button quiet import">Import files<input type="file" id="fileImport" multiple hidden></label>
+        <button class="quiet" id="showFiles">Browse files</button>
+      </div>
+      <div class="brief-rule"></div>
+      <h2 class="section-label">Suggested comparisons</h2>
+      <ul class="prompts">
+        <li>Compare aligners using the same variant caller.</li>
+        <li>Compare callers using the same alignment.</li>
+        <li>Change a quality threshold or ploidy setting.</li>
+        <li>Examine the reads at a site where the results differ.</li>
+      </ul>
+      <button class="text-button" data-tab="guide">Read the instructions</button>
+      <div class="brief-rule"></div>
+      <h2 class="section-label">Notes</h2>
+      <label for="notebook" class="note-label">Record your question, settings and observations.</label>
+      <textarea id="notebook" rows="5" placeholder="Write your notes here."></textarea>
+      <p class="small muted">Notes are saved in this browser. Use Download work to save your files before reloading or closing the page.</p>
+      <div class="source-note"><a href="data/DATASETS.md" target="_blank" rel="noopener">Data sources</a> · <a href="README.md" target="_blank" rel="noopener">Software notes</a></div>
+    </aside>
+
+    <section class="workspace" aria-label="Analysis">
+      <div class="workspace-top"><h2 id="workspaceTitle">Analysis</h2><div id="busyStatus" role="status">Loading…</div></div>
+      <nav class="tabs" aria-label="Analysis tools">
+        <button class="active" data-tab="terminal" aria-current="page">Terminal</button>
+        <button data-tab="galaxy">Galaxy</button>
+        <button data-tab="compare">Compare</button>
+        <button data-tab="guide">Instructions</button>
+      </nav>
+
+      <section id="terminalPanel" class="panel active">
+        <div class="command-strip"><div><b>Command line</b><span>Use the arrow keys for command history and Tab to complete file names.</span></div><button id="exampleButton" class="quiet">Show example commands</button></div>
+        <div id="termRoot"></div>
+        <details class="recipe">
+          <summary>Example pipeline <span>Edit the commands before running them.</span></summary>
+          <textarea id="scriptEditor" spellcheck="false" aria-label="Pipeline commands"></textarea>
+          <div class="recipe-footer">
+            <select id="recipeAligner" aria-label="Aligner"><option value="minimap2">minimap2</option><option value="bowtie2">Bowtie2</option></select>
+            <select id="recipeCaller" aria-label="Variant caller"><option value="multiallelic">bcftools multiallelic</option><option value="consensus">bcftools consensus</option><option value="exactSNP">exactSNP</option></select>
+            <button id="refreshRecipe" class="quiet">Update commands</button>
+            <button id="runScript" class="primary">Run commands</button>
+          </div>
+        </details>
+        <p class="runtime-note">Type <code>help</code> to see the commands supported by this browser terminal.</p>
+      </section>
+
+      <section id="galaxyPanel" class="panel" hidden><div id="galaxyRoot"></div></section>
+
+      <section id="comparePanel" class="panel light-panel" hidden>
+        <div class="section-heading">
+          <h3>Compare variants</h3>
+          <p>Choose two VCF files. The comparison uses <code>bcftools norm</code> to split multiallelic records and left-align variants against the selected reference.</p>
+        </div>
+        <div class="compare-controls">
+          <label>Call set A<select id="compareA"><option value="">Run a caller or import a VCF</option></select></label>
+          <label>Call set B<select id="compareB"><option value="">Run a caller or import a VCF</option></select></label>
+          <label>Minimum QUAL<input id="compareQual" type="number" min="0" placeholder="No filter"></label>
+          <label class="checkbox"><input id="comparePass" type="checkbox"> PASS only</label>
+          <label class="checkbox"><input id="compareSameSample" type="checkbox"> Treat both single-sample files as the same sample</label>
+          <button id="compareButton" class="primary">Compare</button>
+        </div>
+        <p class="small muted">PASS only excludes records whose FILTER field is “.”. Callers use different quality scales, so the same QUAL threshold may not be suitable for both files. Filter each file separately if needed.</p>
+        <div id="comparisonResult" class="comparison-result">
+          <div class="empty-state">
+            <h4>No comparison yet</h4>
+            <p>Run two pipelines or import their VCF files, then select them above. The results will show shared variants, variants found in only one file, and genotype agreement.</p>
+            <button class="text-button" data-tab="galaxy">Open Galaxy</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="guidePanel" class="panel light-panel" hidden>
+        <article class="guide">
+          <h3>Instructions</h3>
+          <p>Use the human or yeast dataset to investigate how the choice of aligner, variant caller or settings affects the results. Choose a comparison, run the pipelines and examine sites where they disagree.</p>
+          <div class="guide-grid">
+            <section><h4>Plan your comparison</h4><p>Decide what you will change. Keep the reads, reference and other settings the same so that you can explain any differences. Consider where the tools might behave differently, such as repeats, indels or regions with low coverage.</p></section>
+            <section><h4>Run the pipelines</h4><p>Use the terminal, the Galaxy forms, or both. They use the same tools and files. Align the reads, sort and index the alignment, then call variants. Give each result a different file name so that you can compare them later.</p></section>
+            <section><h4>Compare the results</h4><p>Select the VCF files in the Compare tab. Check which alleles and genotypes differ. Two callers can make the same error, so agreement alone does not show that a call is correct.</p></section>
+            <section><h4>Examine a difference</h4><p>Inspect the alignment with <code>samtools view</code>, <code>depth</code> or <code>mpileup</code>. Use <code>bcftools query</code> to examine allele depths and quality scores. Are the reads supporting a variant on both strands? Could a repeat or an alignment difference explain the call?</p></section>
+          </div>
+          <details open>
+            <summary>Example comparisons and commands</summary>
+            <p>The Example pipeline panel provides commands you can edit. You could compare minimap2 and Bowtie2 with the same bcftools calling model, or compare the multiallelic and consensus models using the same BAM file.</p>
+            <p>exactSNP uses a different calling algorithm. It reports SNPs and some simple indels but does not provide sample genotypes. Its SNP QUAL is <code>min(40, −log10(p))</code>, and simple indels have QUAL=1. These scores are not Phred-scaled, so choose its filters separately from bcftools filters.</p>
+            <p>Replace the file names and region below with those from your analysis.</p>
+            <pre>samtools flagstat results/alignment.bam
 samtools view results/alignment.bam contig:start-end
 bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\t%QUAL\n' results/calls.vcf
-awk '!/^#/ {print $1, $2, $4, $5}' results/calls.vcf</pre></details><details><summary>What runs here?</summary><div id="capabilityTable"></div><p>All bundled programs run on the supplied bytes. No alignment or variant-call result is replayed. This is a Galaxy-style teaching interface, not a Galaxy server.</p><p>Bowtie2 is markedly slower in this older browser build: a full dataset can take many minutes. Start with minimap2, or prepare smaller paired FASTQ subsets for quick experiments. A subset changes coverage and the evidence available for calling. Single-threaded browser timings measure this implementation and device. They are not a native performance benchmark. Small reference slices also omit genome-wide alternative mappings, so their mapping qualities are not equivalent to whole-genome alignment.</p></details><details><summary>Unix commands in the browser</summary><p>Use <code>help</code> for the available commands. Pipes, input/output redirection, quoted arguments, simple globs, variables and command chaining work. GNU awk, grep, sed and common text utilities process actual files. Shell loops, process substitution, background processes, package installation and arbitrary executables are not implemented.</p></details><details><summary>Know your dataset</summary><p>These are small subsets of biological sequencing data from public archives: NA12878 human exome reads and yeast genomic reads enriched for mitochondrial alignments. Read sequences and the quality scores stored in the source files are retained. The NA12878 FASTQs are recovered from an upstream recalibrated BAM; they are not presented as untouched basecaller output. No variants have been introduced. Read the accession and extraction details in the dataset provenance.</p><p>Human examples use a diploid model. Haploid calling is a starting model for the yeast mitochondrial data, not evidence that the sample is homoplasmic. Mitochondrial copy number is not ploidy. Low-frequency alleles require examining sequencing errors, mapping ambiguity and possible heteroplasmy. Reads crossing the circular mitochondrial origin can be missed or clipped against a linear reference. Inspect that boundary separately.</p><p>All VCF coordinates refer to the FASTA contig names shipped with the dataset. Reference slices use local coordinates; consult the dataset manifest before converting them back to genome positions. Do not mix assemblies or references.</p><p>No benchmark truth set is bundled. The comparison reports agreement, not sensitivity or precision. A valid benchmark would require a matching independently established callset and high-confidence regions. Read extraction based on an existing alignment also favours reads that mapped in that source pipeline; consider that selection bias.</p></details><details><summary>What to hand in</summary><p>A question and prediction; the commands and parameter choices for each run; an allele-level comparison; evidence for one disagreement; and a short account of limitations. Export your experiment to keep inputs, outputs, notes and the command journal. Keep uncertainty visible.</p></details></article></section>
-<footer class="workspace-footer"><span id="fileCount">Shared workspace</span><span>Terminal ↔ Galaxy ↔ Compare</span><span>VARIANT LAB / v1.0</span></footer></section></main><div id="notice" class="notice" role="status" hidden></div>
-<script>window.MG_CONFIG={storePrefix:'variant-lab',biowasmBase:'assets/vendor/biowasm'};</script><script src="assets/js/core.js"></script><script src="assets/js/icons.js"></script><script src="assets/js/vfs.js"></script><script src="assets/js/shell.js"></script><script src="assets/js/terminal.js"></script><script src="assets/js/tools-wasm.js"></script><script src="assets/js/exactsnp.js"></script><script src="assets/js/compare.js"></script><script src="assets/js/galaxy-lab.js"></script><script src="assets/js/lab.js"></script></body></html>
+awk '!/^#/ {print $1, $2, $4, $5}' results/calls.vcf</pre>
+          </details>
+          <details>
+            <summary>Available tools</summary>
+            <div id="capabilityTable"></div>
+            <p>The programs run in your browser on the files you supply. The Galaxy interface provides forms for running these tools; it is a teaching version of Galaxy.</p>
+            <p>Bowtie2 can take several minutes on a full dataset in this browser version. For an initial run, use minimap2 or a smaller paired subset of reads. Reducing the number of reads changes coverage and may affect the calls.</p>
+            <p>Run times depend on the browser build and your computer. They should not be used to rank the speed of the standard installed programs. The small reference sequences also leave out possible alignments elsewhere in the genome, which can affect mapping quality.</p>
+          </details>
+          <details>
+            <summary>Terminal commands</summary>
+            <p>Type <code>help</code> for the available commands. The terminal supports pipes, input and output redirection, quoted arguments, simple filename patterns, variables and command chaining. You can use <code>awk</code>, <code>grep</code>, <code>sed</code> and other text utilities to process your files.</p>
+            <p>Shell loops, process substitution, background processes, package installation and arbitrary executables are not supported.</p>
+          </details>
+          <details>
+            <summary>About the data</summary>
+            <p>The datasets contain public sequencing reads from the NA12878 human exome and BY4741 yeast. The yeast reads were selected for mitochondrial alignment. The human FASTQs were recovered from a BAM file whose quality scores had already been recalibrated. No variants have been added. See <a href="data/DATASETS.md" target="_blank" rel="noopener">Data sources</a> for the accessions and selection methods.</p>
+            <p>The human examples use a diploid calling model. The yeast mitochondrial examples start with a haploid model. This assumes one allele at each site, but a sample can contain different mitochondrial sequences. Mitochondrial copy number is not the same as ploidy. Check possible low-frequency alleles for sequencing errors, ambiguous alignments and heteroplasmy.</p>
+            <p>The mitochondrial reference is linear, although the genome is circular. Reads crossing the origin may be clipped or fail to align.</p>
+            <p>VCF positions refer to the supplied FASTA sequences. The human reference consists of two genome regions with local coordinates; use the offsets in the data documentation to convert them to genome positions.</p>
+            <p>The comparison measures agreement between callers. It does not calculate accuracy, precision or sensitivity because no validated benchmark is included. The reads were selected using existing alignments, so reads that failed to map in those pipelines may be missing.</p>
+          </details>
+          <details>
+            <summary>Your report</summary>
+            <p>Describe your question, the commands and settings used, and the differences between the results. Examine the reads supporting at least one disagreement and explain any uncertainty. Use Download work to save your input and output files, notes and command history.</p>
+          </details>
+        </article>
+      </section>
+
+      <footer class="workspace-footer"><span id="fileCount">Files</span><span>The terminal and Galaxy use the same files.</span></footer>
+    </section>
+  </main>
+  <div id="notice" class="notice" role="status" hidden></div>
+  <script>window.MG_CONFIG={storePrefix:'variant-lab',biowasmBase:'assets/vendor/biowasm'};</script>
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/vfs.js"></script>
+  <script src="assets/js/shell.js"></script>
+  <script src="assets/js/terminal.js"></script>
+  <script src="assets/js/tools-wasm.js"></script>
+  <script src="assets/js/exactsnp.js"></script>
+  <script src="assets/js/compare.js"></script>
+  <script src="assets/js/galaxy-lab.js"></script>
+  <script src="assets/js/lab.js"></script>
+</body>
+</html>

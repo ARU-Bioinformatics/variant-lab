@@ -1,6 +1,6 @@
-# Variant Lab
+# Variant calling practical
 
-A standalone, open-ended variant-calling practical for a static website or GitHub Pages. It adapts the terminal and shared-file design of the supplied variant practicals, replaces recorded alignments/calls with real computation, and adds an experimental comparison workspace.
+A variant-calling practical for GitHub Pages or another static website. Students can align human and yeast sequencing reads, call variants, and compare the results from different tools and settings. The terminal and Galaxy forms use the same files. The layout and colours follow the original genomic variant practicals.
 
 ## Start locally
 
@@ -11,25 +11,25 @@ python3 serve.py 8000
 
 Open `http://localhost:8000`. Do not double-click `index.html`: the browser needs HTTP to load WebAssembly and data. All runtime assets and datasets are included; no external CDN is required during the practical. First runs load the selected WASM modules lazily. Outputs are kept in memory in the current tab.
 
-## Put it on GitHub Pages
+## GitHub Pages
 
 Create a repository, place **the contents** of this folder at the repository root (`index.html`, `assets/`, `data/`, `.nojekyll`, etc.), then enable Pages from the desired branch and root folder. All asset paths are relative, so repository subpaths work. There is no npm build or backend. No deployment has been performed for you.
 
 The uncompressed project is approximately 30 MB. A desktop/laptop browser is recommended for analysis; layouts also adapt to smaller screens. Use a recent browser with WebAssembly, Web Workers, Blob and Fetch support. Runtime tools are single-threaded and do not need cross-origin isolation headers.
 
-## What learners can do
+## Features
 
-- Inspect, edit, filter and combine actual FASTQ, FASTA, SAM, BAM and VCF files.
+- Inspect, edit, filter and combine FASTQ, FASTA, SAM, BAM and VCF files.
 - Select **minimap2 or Bowtie2** and run either on either dataset.
 - Feed any resulting BAM to **bcftools** or **exactSNP**. Within bcftools, compare the **multiallelic** and **consensus** calling algorithms.
 - Use terminal commands, Galaxy-style forms, or both, with one shared filesystem.
-- Change parameters and save named alternatives instead of stepping through a fixed tutorial.
-- Normalize and compare callsets: shared/unique alleles, Jaccard overlap, SNP/indel counts, matching-sample genotype agreement, and read-evidence-led investigation of disagreements. No accuracy score is inferred from agreement.
-- Import local files; download individual files from the terminal file drawer; export an experiment archive containing inputs, outputs, notes, exact commands, timing, status and dataset provenance.
+- Change parameters and save each result under a different name.
+- Normalise and compare call sets: shared and unique alleles, Jaccard overlap, SNP and indel counts, and genotype agreement for matching samples. Agreement is not an accuracy measure.
+- Import files or download individual files from the terminal file list. Download work saves an archive of inputs, outputs, notes, commands, timings and data sources.
 
-The initial command scratchpad is editable. It is a starting example, not the answer. The field guide provides questions, experimental controls and evidence requirements. There are no predetermined call counts or canned alignment outputs in the execution path.
+The Example pipeline panel contains commands that students can edit. The Instructions tab suggests comparisons and explains the tools, data and limitations. All alignment and calling results are computed from the supplied files.
 
-## Execution and boundaries
+## Software and limitations
 
 | Component | Version | Implementation and scope |
 |---|---|---|
@@ -45,9 +45,9 @@ The initial command scratchpad is editable. It is a starting example, not the an
 
 **The browser is not full Linux or full Bash.** It does not run arbitrary native executables, shell loops, process substitution, packages, network commands or background processes. Unimplemented syntax/commands fail visibly. Pipes are evaluated sequentially through real byte buffers; they preserve binary BAM/BCF but do not have Unix concurrent streaming or `SIGPIPE` semantics. The local Aioli patch exposes real file descriptors and exit status so errors are not mistaken for successful runs. **Bowtie2 can take many minutes on the full bundled reads in this older WASM build**; minimap2 is the faster starting route. Small paired FASTQ subsets work, but alter coverage and the evidence available for calling. This is a browser-build limitation, not evidence that native Bowtie2 is generally slow. Ctrl+C cannot interrupt every WASM call immediately; the terminal documents its stop behavior. Large files may exhaust browser memory.
 
-## Real sequencing datasets
+## Datasets
 
-The practical now uses **biological sequencing reads, not simulated reads**. No variants are introduced and no synthetic truth VCF is shipped.
+Both datasets contain public sequencing reads. No variants have been added.
 
 - **Human:** a region-selected subset of NA12878 exome sequencing from **SRR098401**, the same run used by the earlier practical. Read pairs are reconstructed from the public 1000 Genomes exome BAM. Its stored quality scores have already undergone upstream recalibration; these FASTQs are not presented as byte-identical copies of the originally deposited raw FASTQ.
 - **Yeast:** genuine paired genomic reads from *S. cerevisiae* BY4741, run **SRR1569870**, enriched for mitochondrial mappings after comparison against the complete sacCer3 nuclear and mitochondrial reference. Source accession, strain, read selection and byte-level provenance are recorded with the data.
@@ -56,7 +56,7 @@ See [dataset provenance](data/DATASETS.md), `data/manifest.json`, the per-datase
 
 These are deliberately small teaching subsets. Read extraction guided by an existing alignment favours reads that mapped under that alignment method. Small reference slices omit competing mappings elsewhere in the genome. Mates can map outside the retained reference or remain unmapped. These restrictions are part of the discussion, not grounds for treating one small-reference pipeline as a biological truth standard.
 
-## Comparison safeguards
+## Comparing variants
 
 Both selected callsets are split and left-aligned with `bcftools norm -f REFERENCE -m -any` before comparison. REF mismatches, incompatible declared references or contig lengths fail visibly. Matching compares `(CHROM, POS, REF, ALT)` alleles; it is **not haplotype-aware benchmarking**. A complex event and several nearby SNPs can still differ after normalization. Counts are derived from actual VCFs, not expected teaching outputs.
 
@@ -64,7 +64,7 @@ The same numerical quality score is not equivalent between callers. exactSNP's S
 
 Genotype agreement uses matching sample names unless you explicitly map the two single-sample files using the checkbox. Phase is ignored; dosage and ploidy must agree. Missing genotypes and exactSNP's absent GT field are excluded, not called discordant. No independently validated benchmark is bundled, so the interface does not report sensitivity, precision or truth recovery. A matching benchmark VCF and high-confidence region mask would be needed for that evaluation. The bundled BED defines reference regions; it is not a callability mask.
 
-## Suggested teaching structure
+## Teaching suggestions
 
 1. Choose a question and state a prediction.
 2. Hold the dataset, reference and evidence thresholds fixed while changing one algorithm.
@@ -75,9 +75,9 @@ Genotype agreement uses matching sample names unless you explicitly map the two 
 
 Possible investigations: alignment behavior in homologous human sequences; consensus versus multiallelic modeling; local-background SNP testing versus genotype likelihoods; low-coverage sensitivity; mitochondrial origin clipping; quality filters that change callset agreement and the supporting read evidence. Timings are browser/device measurements, not native performance rankings.
 
-## Persistence and privacy
+## Saving work
 
-No reads or variants are uploaded. Tools, comparisons and file imports run locally in the tab. Notes and recent command history use localStorage. Result files are volatile; **export before reloading**. The `.tar.gz` experiment export contains the shared workspace plus `experiment.json` and `commands.txt`; it is an archive for evidence/replay, not an automatic session restore format. The app has no analytics or external annotation calls.
+No reads or variants are uploaded. Tools, comparisons and file imports run locally in the tab. Notes and recent command history use localStorage. Result files are lost when the page closes or reloads. Use **Download work** first. The `.tar.gz` download contains the files, notes and command history, with metadata in `experiment.json` and `commands.txt`. It does not automatically restore a browser session. The app has no analytics or external annotation calls.
 
 ## Validation
 
@@ -90,14 +90,14 @@ No reads or variants are uploaded. Tools, comparisons and file imports run local
 
 Before teaching: serve the site, run both aligners and both caller programs on each dataset, inspect the Galaxy job histories, compare VCFs, import a file, export an archive, and try the browsers/devices students will use. Use small independent experiments to establish your own expected discussion points.
 
-## Development map
+## Project files
 
-- `index.html`, `assets/css/lab.css`, `assets/js/lab.js`: standalone workspace, brief, shared orchestration, notebook/export.
+- `index.html`, `assets/css/lab.css`, `assets/js/lab.js`: standalone page layout, instructions, notes and download controls.
 - `vfs.js`, `shell.js`, `terminal.js`, `tools-wasm.js`: real-file terminal/runtime adapted from the supplied practical.
 - `galaxy-lab.js`: editable tool forms, command preview and job history.
 - `compare.js`: VCF validation, overlap, genotype comparison and export.
 - `exactsnp.js`, `assets/vendor/exactsnp/`: independent caller worker and licensed corresponding source.
-- `data/`, `build/`: real read extraction recipes, source provenance, FASTQ/reference files and prebuilt indexes.
+- `data/`, `build/`: read extraction scripts, data sources, FASTQ and reference files, and prebuilt indexes.
 
 ## Credits and sources
 

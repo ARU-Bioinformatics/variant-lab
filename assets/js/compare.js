@@ -92,15 +92,15 @@
       });
     });
     if (!header) fail('missing #CHROM tab-delimited header.');
-    if (output.records.some(function (r) { return r.alts.length > 1; })) output.warnings.push('Unsplit multiallelic records found: allele overlap is exact, but genotype comparisons containing another ALT allele are excluded. Normalize and split both files with bcftools norm -f REF -m -any.');
-    if (output.alleles.some(function (a) { return a.type === 'other'; })) output.warnings.push('Symbolic or breakend ALT records are matched by their literal allele strings only; END/SVLEN and structural-variant equivalence are not evaluated.');
+    if (output.records.some(function (r) { return r.alts.length > 1; })) output.warnings.push('Unsplit multiallelic records found. Genotypes containing another ALT allele are excluded from concordance. Normalise and split both files with bcftools norm -f REF -m -any.');
+    if (output.alleles.some(function (a) { return a.type === 'other'; })) output.warnings.push('Symbolic and breakend ALT records are matched by their text. The comparison does not use END or SVLEN to assess whether structural variants are equivalent.');
     return output;
   }
 
   function checkReferences(parsed, options, warnings) {
     const lengths = new Map(), assemblies = new Map(), assertions = new Map();
     const references = new Set(parsed.map(function (p) { return p.metadata.reference; }).filter(Boolean));
-    if (references.size > 1) warnings.push('VCF reference header values differ. File paths alone cannot establish genome identity; check that every input was normalized against the same reference.');
+    if (references.size > 1) warnings.push('The VCF reference headers differ. Check that both files use the same reference; different file paths may refer to the same sequence.');
     parsed.forEach(function (p) {
       Object.keys(p.metadata.contigs).forEach(function (chrom) {
         const c = p.metadata.contigs[chrom];
@@ -138,7 +138,7 @@
     });
     const a = new Set(parsed[0].records.map(function (r) { return r.chrom; }));
     const b = new Set(parsed[1].records.map(function (r) { return r.chrom; }));
-    if (a.size && b.size && !Array.from(a).some(function (c) { return b.has(c); })) warnings.push('Inputs have no observed contig names in common. Check genome choice, selected regions, and chr-prefix naming; contig aliases are not inferred.');
+    if (a.size && b.size && !Array.from(a).some(function (c) { return b.has(c); })) warnings.push('The files have no contig names in common. Check the reference, regions and chr prefixes. Contig names must match exactly.');
   }
 
   function regionMap(input) {
@@ -218,8 +218,8 @@
     const parsed = truth ? [parsedA, parsedB, truth] : [parsedA, parsedB];
     const warnings = Array.from(new Set(parsed.flatMap(function (p) { return p.warnings; })));
     if (parsedA.metadata.exactSNP || parsedB.metadata.exactSNP) {
-      warnings.push('exactSNP QUAL uses min(40, -log10(p)) for SNPs in this practical, while its simple indels have fixed QUAL=1. These values are not on the bcftools Phred QUAL scale. Across callers, a shared QUAL threshold compares different meanings; thresholds above 1 remove exactSNP indels. Native exactSNP output has no GT; genotype concordance is unavailable for those records.');
-      if (options.minQual != null && parsedA.metadata.exactSNP !== parsedB.metadata.exactSNP) fail('a shared QUAL threshold cannot compare exactSNP with a different or unidentified caller because their quality scales differ. Prefilter each caller separately using its own quality scale, or remove the shared QUAL threshold.');
+      warnings.push('exactSNP reports SNP QUAL as min(40, -log10(p)) and simple indels with fixed QUAL=1. These scores differ from bcftools Phred QUAL; thresholds above 1 remove exactSNP indels. exactSNP has no GT field, so its records cannot be compared for genotype concordance.');
+      if (options.minQual != null && parsedA.metadata.exactSNP !== parsedB.metadata.exactSNP) fail('exactSNP and the other caller cannot use a shared QUAL threshold: their quality scales differ. Prefilter each caller separately, or remove the shared QUAL threshold.');
     }
     checkReferences(parsed, options, warnings);
     const filters = { minQual: options.minQual == null ? null : Number(options.minQual), passOnly: !!options.passOnly };
@@ -231,7 +231,7 @@
       if (!parsedA.samples.includes(options.sampleA) || !parsedB.samples.includes(options.sampleB)) fail('sampleA and sampleB must both name existing samples.');
       samplePairs = [[options.sampleA, options.sampleB]];
     } else samplePairs = parsedA.samples.filter(function (s) { return parsedB.samples.includes(s); }).map(function (s) { return [s, s]; });
-    if (!samplePairs.length) warnings.push('No matched sample names: genotype concordance is unavailable. Explicitly map sampleA/sampleB only when they represent the same sample.');
+    if (!samplePairs.length) warnings.push('No sample names match, so genotype concordance is unavailable. Use the sample mapping option only if both files contain the same sample.');
     const genotypeStats = { concordant: 0, discordant: 0, comparable: 0, excluded: 0, excludedMissing: 0, excludedOtherAlt: 0, excludedInvalid: 0, excludedDuplicateConflict: 0, concordance: null, samplePairs: samplePairs };
     const allKeys = new Set(Array.from(a.keys()).concat(Array.from(b.keys())));
     const rows = [];
@@ -263,25 +263,25 @@
     rows.sort(function (x, y) { return x.chrom.localeCompare(y.chrom, undefined, { numeric: true }) || x.pos - y.pos || x.ref.localeCompare(y.ref) || x.alt.localeCompare(y.alt); });
     genotypeStats.concordance = ratio(genotypeStats.concordant, genotypeStats.comparable);
     const duplicateCount = function (map) { let n = 0; map.forEach(function (entries) { n += entries.length - 1; }); return n; };
-    if (duplicateCount(a) || duplicateCount(b)) warnings.push('Duplicate allele records are counted once. Conflicting genotypes in duplicate records are excluded from genotype concordance.');
+    if (duplicateCount(a) || duplicateCount(b)) warnings.push('Duplicate alleles are counted once. If their genotypes disagree, they are excluded from genotype concordance.');
     const result = {
       metrics: { shared: shared, onlyA: onlyA, onlyB: onlyB, union: allKeys.size, jaccard: ratio(shared, allKeys.size), countA: a.size, countB: b.size, typesA: typeCounts(a), typesB: typeCounts(b), genotypes: genotypeStats },
       rows: rows, filters: filters, evaluation: { masked: regions !== null, coordinateConvention: 'BED: 0-based, half-open; the whole REF span must lie inside the interval union' },
       warnings: warnings,
       notes: [
-        'Alleles are matched by exact CHROM, POS, REF and ALT after external normalization. No left alignment or trimming is performed here. An MNV/complex call and separate SNPs can describe the same haplotype but count as different alleles; this is not haplotype-aware benchmarking.',
-        'Counts describe ALT alleles present in VCF records, including records with a reference genotype. They do not count individuals or infer biological equivalence.',
-        'Genotype concordance covers shared alleles and matched samples only. Phase is ignored; allele dosage and ploidy must both match. Missing, invalid, conflicting duplicate, or other-ALT genotypes are excluded.',
-        'QUAL scales and FILTER definitions differ between callers. A shared numeric QUAL threshold is not equivalent evidence across algorithms.',
-        'Agreement between callers does not establish accuracy. Without an independent matching benchmark and appropriate evaluation regions, these metrics do not measure precision or sensitivity.'
+        'Alleles match when CHROM, POS, REF and ALT are identical after normalisation. No left alignment or trimming is performed here. An MNV or complex call can describe the same haplotype as separate SNPs, but they count as different alleles in this comparison.',
+        'Counts refer to ALT alleles in VCF records, including records with a reference genotype.',
+        'Genotype concordance uses shared alleles from matching samples. Allele dosage and ploidy must match; phase is ignored. Missing or invalid genotypes, conflicting duplicates and genotypes containing another ALT allele are excluded.',
+        'QUAL scales and FILTER definitions differ between callers. The same QUAL threshold can therefore select different levels of evidence.',
+        'Agreement between callers does not show which calls are correct. Precision and sensitivity require an independent benchmark and suitable evaluation regions.'
       ]
     };
     if (truth) {
       // Truth defines the benchmark: never apply the caller QUAL/FILTER threshold to it.
       const truthMap = alleleMap(truth, {}, regions);
-      result.truth = { label: regions ? 'Precision/recall against supplied synthetic truth within evaluation regions' : 'Apparent precision/recall against all supplied synthetic truth (no callable mask)', masked: regions !== null, a: truthMetrics(a, truthMap), b: truthMetrics(b, truthMap) };
-      result.notes.push('Truth metrics score exact alleles against the supplied synthetic benchmark, not biological or clinical truth. Caller filters do not filter the truth set. No true-negative or specificity estimate is made.');
-      if (!regions) warnings.push('No callable/evaluation mask supplied: apparent precision and recall may include regions that were not sequenced or callable. Supply evaluationRegions to scope the benchmark.');
+      result.truth = { label: regions ? 'Precision and recall against synthetic truth in the evaluation regions' : 'Apparent precision and recall against synthetic truth (no callable mask)', masked: regions !== null, a: truthMetrics(a, truthMap), b: truthMetrics(b, truthMap) };
+      result.notes.push('These scores compare exact alleles with the supplied synthetic benchmark. They do not establish biological or clinical truth. Filters apply to the call sets only. True negatives and specificity are not calculated.');
+      if (!regions) warnings.push('No evaluation regions were supplied. Apparent precision and recall may include regions without sequencing coverage or reliable calls. Supply evaluationRegions to restrict the comparison.');
       rows.forEach(function (row) { row.inTruth = truthMap.has(row.key); });
     }
     return result;
@@ -307,7 +307,7 @@
     const pct = function (v) { return v == null ? 'N/A' : (100 * v).toFixed(1) + '%'; };
     container.replaceChildren();
     const section = el('section', null, 'variant-comparison');
-    section.setAttribute('aria-label', 'Variant callset comparison');
+    section.setAttribute('aria-label', 'Variant call set comparison');
     section.appendChild(el('h3', labelA + ' compared with ' + labelB));
     const metrics = el('dl', null, 'comparison-metrics');
     const m = result.metrics;
@@ -321,9 +321,9 @@
     if (result.truth) {
       section.appendChild(el('h4', result.truth.label));
       const table = el('table', null, 'comparison-truth');
-      table.appendChild(el('caption', 'Exact-allele benchmark scores; N/A means the denominator is zero.'));
+      table.appendChild(el('caption', 'Scores based on exact allele matches. N/A means the denominator is zero.'));
       const head = el('thead'), hr = el('tr');
-      ['Callset', 'TP', 'FP', 'FN', 'Precision', 'Recall', 'F1'].forEach(function (t) { const th = el('th', t); th.scope = 'col'; hr.appendChild(th); });
+      ['Call set', 'TP', 'FP', 'FN', 'Precision', 'Recall', 'F1'].forEach(function (t) { const th = el('th', t); th.scope = 'col'; hr.appendChild(th); });
       head.appendChild(hr); table.appendChild(head);
       const body = el('tbody');
       [[labelA, result.truth.a], [labelB, result.truth.b]].forEach(function (pair) {
@@ -334,15 +334,15 @@
       table.appendChild(body); section.appendChild(table);
     }
     result.warnings.forEach(function (warning) { section.appendChild(el('p', warning, 'comparison-warning')); });
-    const details = el('details'), summary = el('summary', 'How these metrics are calculated');
+    const details = el('details'), summary = el('summary', 'About the comparison');
     details.appendChild(summary);
     result.notes.forEach(function (note) { details.appendChild(el('p', note)); });
-    details.appendChild(el('p', result.evaluation.masked ? 'All metrics are restricted to the supplied evaluation interval union; the full REF span must be contained.' : 'Allele overlap includes all retained records; no evaluation mask is applied.'));
+    details.appendChild(el('p', result.evaluation.masked ? 'Only alleles whose full REF sequence lies within the evaluation regions are included.' : 'All records that pass the selected filters are included. No evaluation regions are applied.'));
     section.appendChild(details);
     const controls = el('div', null, 'comparison-controls'), label = el('label', 'Show alleles: '), select = el('select');
     [['all', 'All alleles'], ['shared', 'Shared'], ['onlyA', labelA + ' only'], ['onlyB', labelB + ' only']].forEach(function (pair) { const option = el('option', pair[1]); option.value = pair[0]; select.appendChild(option); });
     label.appendChild(select); controls.appendChild(label);
-    const download = el('button', 'Download all alleles (TSV)'); download.type = 'button';
+    const download = el('button', 'Download table (TSV)'); download.type = 'button';
     download.addEventListener('click', function () {
       const win = doc.defaultView, url = win.URL.createObjectURL(new win.Blob([toTSV(result)], { type: 'text/tab-separated-values;charset=utf-8' }));
       const a = el('a'); a.href = url; a.download = 'variant-comparison.tsv'; doc.body.appendChild(a); a.click(); a.remove(); win.setTimeout(function () { win.URL.revokeObjectURL(url); }, 1000);
@@ -350,7 +350,7 @@
     controls.appendChild(download); section.appendChild(controls);
     const status = el('p'); status.setAttribute('aria-live', 'polite'); section.appendChild(status);
     const wrap = el('div', null, 'comparison-table-wrap'); wrap.style.overflowX = 'auto';
-    const table = el('table', null, 'comparison-alleles'); table.appendChild(el('caption', 'Exact normalized ALT alleles retained after selected filters'));
+    const table = el('table', null, 'comparison-alleles'); table.appendChild(el('caption', 'Normalised ALT alleles that pass the selected filters'));
     const head = el('thead'), hr = el('tr');
     const columns = ['Contig', 'Position', 'REF', 'ALT', 'Type', 'Present in', labelA + ' QUAL', labelB + ' QUAL', 'Genotypes'];
     if (result.truth) columns.push('In supplied truth');

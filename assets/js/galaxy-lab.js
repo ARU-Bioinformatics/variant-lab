@@ -14,80 +14,80 @@
   const output = name => path('out', 'Output file', name, { output: true, wide: true });
   const TOOLS = [
     {
-      id: 'minimap2', group: 'Align reads', title: 'Minimap2', tag: 'Seed & chain',
-      description: 'Align reads to any loaded reference. The short-read preset uses minimizer seeds and chaining; ambiguous and repetitive reads can behave differently from Bowtie2.',
+      id: 'minimap2', group: 'Align reads', title: 'Minimap2', tag: 'Minimiser seeds',
+      description: 'Align reads using minimiser seeds and chaining. Choose sr for short reads. Compare alignments in repetitive or ambiguous regions with Bowtie2.',
       fields: [path('ref', 'Reference FASTA', 'reference.fa'), field('preset', 'Preset', 'sr', { type: 'select', options: [['sr', 'sr — short reads'], ['map-ont', 'map-ont — Nanopore'], ['map-pb', 'map-pb — PacBio CLR'], ['map-hifi', 'map-hifi — high-fidelity long reads']] }), path('r1', 'Reads / mate 1', 'reads_R1.fastq'), path('r2', 'Mate 2 (optional)', 'reads_R2.fastq', { required: false }), advanced(), output('minimap2.sam')],
       command: v => 'minimap2 -ax ' + quote(v.preset) + extra(v) + ' ' + quote(v.ref) + ' ' + quote(v.r1) + (v.r2.trim() ? ' ' + quote(v.r2) : '') + ' > ' + quote(v.out)
     },
     {
       id: 'bowtie2', group: 'Align reads', title: 'Bowtie2', tag: 'FM index',
-      description: 'Align against the bundled prebuilt Bowtie2 index. Enter its shared prefix, without .1.bt2 or other suffixes. Use additional arguments to explore alignment sensitivity or local alignment.',
+      description: 'Align reads using a Bowtie2 index. Enter the index prefix without .1.bt2 or another suffix. Additional arguments let you change sensitivity or use local alignment.',
       fields: [path('index', 'Bowtie2 index prefix', 'reference'), path('r1', 'Reads / mate 1', 'reads_R1.fastq'), path('r2', 'Mate 2 (optional)', 'reads_R2.fastq', { required: false }), advanced(), output('bowtie2.sam')],
       command: v => 'bowtie2 -x ' + quote(v.index) + (v.r2.trim() ? ' -1 ' + quote(v.r1) + ' -2 ' + quote(v.r2) : ' -U ' + quote(v.r1)) + extra(v) + ' -S ' + quote(v.out)
     },
     {
-      id: 'faidx', group: 'Prepare & inspect', title: 'Index reference', tag: 'samtools faidx',
-      description: 'Create the FASTA index used for reference lookup. The output is the reference path followed by .fai.',
+      id: 'faidx', group: 'Prepare and inspect', title: 'Index reference', tag: 'samtools faidx',
+      description: 'Index a FASTA reference. The output has the same filename with .fai added.',
       fields: [path('ref', 'Reference FASTA', 'reference.fa')],
       command: v => 'samtools faidx ' + quote(v.ref)
     },
     {
-      id: 'sort', group: 'Prepare & inspect', title: 'Sort alignments', tag: 'samtools sort',
-      description: 'Convert SAM to BAM and sort by genomic coordinate. Coordinate-sorted BAM can be indexed and passed to variant calling.',
+      id: 'sort', group: 'Prepare and inspect', title: 'Sort alignments', tag: 'samtools sort',
+      description: 'Sort alignments by genomic coordinate and write a BAM file for indexing and variant calling.',
       fields: [path('input', 'Input SAM / BAM', 'minimap2.sam'), advanced(), output('minimap2.sorted.bam')],
       command: v => 'samtools sort' + extra(v) + ' -o ' + quote(v.out) + ' ' + quote(v.input)
     },
     {
-      id: 'index', group: 'Prepare & inspect', title: 'Index alignments', tag: 'samtools index',
-      description: 'Index a coordinate-sorted BAM. The index lets tools fetch alignments for a selected region.',
+      id: 'index', group: 'Prepare and inspect', title: 'Index alignments', tag: 'samtools index',
+      description: 'Index a coordinate-sorted BAM so that tools can read alignments from a selected region.',
       fields: [path('input', 'Coordinate-sorted BAM', 'minimap2.sorted.bam'), advanced()],
       command: v => 'samtools index' + extra(v) + ' ' + quote(v.input)
     },
     {
-      id: 'flagstat', group: 'Prepare & inspect', title: 'Alignment summary', tag: 'samtools flagstat',
-      description: 'Count mapped reads, properly paired reads and other SAM flag categories. Compare these summaries before interpreting differences between callers.',
+      id: 'flagstat', group: 'Prepare and inspect', title: 'Alignment summary', tag: 'samtools flagstat',
+      description: 'Count mapped reads, properly paired reads and other SAM flag categories. Compare these counts between aligners.',
       fields: [path('input', 'Input SAM / BAM', 'minimap2.sorted.bam'), advanced(), output('alignment-summary.txt')],
       command: v => 'samtools flagstat' + extra(v) + ' ' + quote(v.input) + ' > ' + quote(v.out)
     },
     {
-      id: 'depth', group: 'Prepare & inspect', title: 'Coverage depth', tag: 'samtools depth',
-      description: 'Write per-position read depth. With -a, positions without coverage are included. Remember that coverage alone does not establish variant quality.',
+      id: 'depth', group: 'Prepare and inspect', title: 'Coverage depth', tag: 'samtools depth',
+      description: 'Write the read depth at each position. The -a option includes positions with no coverage. Depth alone does not show whether a variant call is reliable.',
       fields: [path('input', 'Input BAM', 'minimap2.sorted.bam'), field('extra', 'Additional arguments', '-a', { required: false, wide: true }), output('depth.tsv')],
       command: v => 'samtools depth' + extra(v) + ' ' + quote(v.input) + ' > ' + quote(v.out)
     },
     {
       id: 'mpileup', group: 'Call variants', title: 'Genotype likelihoods', tag: 'bcftools mpileup',
-      description: 'Calculate genotype likelihoods from a BAM and matching reference. Save one likelihood file and try either calling model below. Mapping-quality and base-quality thresholds alter the evidence available to both.',
+      description: 'Calculate genotype likelihoods from alignments and a matching reference. Use the output with either bcftools calling model. Changing the mapping and base quality thresholds changes which reads and bases contribute.',
       fields: [path('ref', 'Reference FASTA', 'reference.fa'), path('input', 'Input BAM', 'minimap2.sorted.bam'), field('mapq', 'Minimum mapping quality', '20', { type: 'number', min: 0, max: 255 }), field('baseq', 'Minimum base quality', '20', { type: 'number', min: 0, max: 255 }), advanced(), output('minimap2.likelihoods.bcf')],
       command: v => 'bcftools mpileup -f ' + quote(v.ref) + ' -q ' + quote(v.mapq) + ' -Q ' + quote(v.baseq) + ' -a FORMAT/AD,FORMAT/DP' + extra(v) + ' -Ob -o ' + quote(v.out) + ' ' + quote(v.input)
     },
     {
       id: 'call', group: 'Call variants', title: 'Call genotypes', tag: 'bcftools call',
-      description: 'Compare the multiallelic (-m) and original consensus (-c) calling models in bcftools. These are two algorithms in one caller suite. Choose ploidy to match the dataset and use a new filename for each experiment.',
+      description: 'Call variants with the multiallelic (-m) or consensus (-c) model in bcftools. Choose the ploidy for your dataset and save each run to a separate file.',
       fields: [path('input', 'Likelihoods BCF / VCF', 'minimap2.likelihoods.bcf'), field('model', 'Calling model', '-m', { type: 'select', options: [['-m', 'Multiallelic (-m)'], ['-c', 'Consensus (-c)']] }), field('ploidy', 'Ploidy', '2', { type: 'select', options: [['2', 'Diploid (2; default)'], ['1', 'Haploid (1)']] }), advanced(), output('minimap2.multiallelic.vcf')],
       command: v => 'bcftools call ' + v.model + (String(v.ploidy) === '1' ? ' --ploidy 1' : '') + ' -v' + extra(v) + ' -Ov -o ' + quote(v.out) + ' ' + quote(v.input)
     },
     {
-      id: 'exactsnp', group: 'Call variants', title: 'exactSNP', tag: 'Independent caller · Subread',
-      description: 'Call variants directly from any aligner’s coordinate-sorted BAM with Subread exactSNP, independently of bcftools. It is primarily a SNP caller and also reports simple CIGAR-derived indels. Its VCF has no sample genotypes. SNP QUAL is min(40, −log10(p)), not a Phred score; indel QUAL is fixed at 1. Use caller-specific filters when comparing results.',
+      id: 'exactsnp', group: 'Call variants', title: 'exactSNP', tag: 'Subread',
+      description: 'Call SNPs and simple CIGAR-derived indels from a coordinate-sorted BAM. exactSNP does not report sample genotypes. SNP QUAL is min(40, −log10(p)); indel QUAL is fixed at 1. These are not Phred scores, so choose filters appropriate to this caller.',
       fields: [path('input', 'Coordinate-sorted BAM', 'minimap2.sorted.bam'), path('ref', 'Reference FASTA', 'reference.fa'), advanced(), output('minimap2.exactsnp.vcf')],
       command: v => 'exactSNP -b -i ' + quote(v.input) + ' -g ' + quote(v.ref) + extra(v) + ' -o ' + quote(v.out)
     },
     {
-      id: 'norm', group: 'Compare & refine', title: 'Normalize variants', tag: 'bcftools norm',
-      description: 'Left-align indels against the reference and split multiallelic records. Normalize each callset before comparing allele identities; equivalent variants can otherwise look different.',
+      id: 'norm', group: 'Compare and filter', title: 'Normalise variants', tag: 'bcftools norm',
+      description: 'Left-align indels against the reference and split multiallelic records. Normalise both call sets before comparing them, as the same variant can be represented in different ways.',
       fields: [path('ref', 'Reference FASTA', 'reference.fa'), path('input', 'Input VCF / BCF', 'minimap2.multiallelic.vcf'), advanced(), output('minimap2.multiallelic.normalized.vcf')],
       command: v => 'bcftools norm -f ' + quote(v.ref) + ' -m -any' + extra(v) + ' ' + quote(v.input) + ' -Ov -o ' + quote(v.out)
     },
     {
-      id: 'filter', group: 'Compare & refine', title: 'Filter variants', tag: 'bcftools filter',
-      description: 'Keep records matching a bcftools expression. Try different thresholds, save each result separately, and compare which true and false calls were removed. Quality scales differ between callers: exactSNP QUAL is not Phred-scaled, so do not apply the same QUAL cutoff indiscriminately.',
+      id: 'filter', group: 'Compare and filter', title: 'Filter variants', tag: 'bcftools filter',
+      description: 'Keep records that match a bcftools expression. Save each result separately and check which calls were removed. Quality scales differ between callers: exactSNP QUAL is not Phred-scaled, so use a suitable threshold for each caller.',
       fields: [path('input', 'Input VCF / BCF', 'minimap2.multiallelic.normalized.vcf'), field('expression', 'Include expression', 'QUAL>=20', { wide: true }), advanced(), output('minimap2.multiallelic.filtered.vcf')],
       command: v => 'bcftools filter -i ' + quote(v.expression) + extra(v) + ' -Ov -o ' + quote(v.out) + ' ' + quote(v.input)
     },
     {
-      id: 'custom', group: 'Explore freely', title: 'Custom command', tag: 'Shared terminal',
-      description: 'Run the same supported shell commands as the terminal. Use help in the terminal for the available command set and known shell limits. Outputs are shared with every tool form.',
+      id: 'custom', group: 'Other commands', title: 'Custom command', tag: 'Shell',
+      description: 'Run a shell command. Type help in the terminal for available commands and supported syntax. Files are shared with the terminal and other tools.',
       fields: [field('command', 'Command', base => 'ls -lh ' + quote(base), { type: 'textarea', wide: true })],
       command: v => v.command.trim()
     }
@@ -320,7 +320,7 @@
           this.status.textContent = 'Select the command text to copy it.';
         }
       });
-      top.append(el('span', '', 'COMMAND PREVIEW'), copy);
+      top.append(el('span', '', 'Command'), copy);
       this.commandPreview = el('pre', 'gl-command');
       block.append(top, this.commandPreview);
       const row = el('div', 'gl-run-row');
@@ -329,7 +329,7 @@
       this.status = el('span', 'gl-status');
       this.status.setAttribute('role', 'status');
       row.append(submit, this.status);
-      form.append(grid, el('p', 'gl-hint', 'Paths are editable. Give each experiment a distinct output name to keep both results.'), block, row, el('p', 'gl-hint', 'Bioinformatics commands execute real WebAssembly tools in your browser.'));
+      form.append(grid, el('p', 'gl-hint', 'Use a different output filename for each run to keep earlier results.'), block, row, el('p', 'gl-hint', 'Tools run in your browser.'));
       form.addEventListener('submit', event => {
         event.preventDefault();
         if (form.reportValidity()) this.submit(tool, Object.assign({}, values));
@@ -442,7 +442,7 @@
     renderHistory() {
       this.historyTitle.textContent = 'History · ' + this.jobs.length + ' jobs';
       this.historyJobs.replaceChildren();
-      if (!this.jobs.length) this.historyJobs.append(el('p', 'gl-empty', 'Your analysis history starts here. Choose a tool, edit its inputs, and run an experiment.'));
+      if (!this.jobs.length) this.historyJobs.append(el('p', 'gl-empty', 'Choose a tool, check its inputs and run it. Jobs will appear here.'));
       this.jobs.slice().reverse().forEach(job => {
         const button = el('button', 'gl-job');
         button.type = 'button';
@@ -450,7 +450,7 @@
         button.setAttribute('aria-pressed', String(this.selectedJob === job));
         const state = { success: 'Completed', error: 'Failed', queued: 'Queued', running: 'Running' }[job.status];
         button.append(el('strong', '', job.id + '. ' + job.title), el('small', '', state + ' · ' + job.dataset + (job.elapsed != null ? ' · ' + job.elapsed.toFixed(1) + 's' : '')));
-        if (job.outputs.length) button.append(el('small', '', job.outputs.length + ' new / updated file' + (job.outputs.length === 1 ? '' : 's')));
+        if (job.outputs.length) button.append(el('small', '', job.outputs.length + ' new or changed file' + (job.outputs.length === 1 ? '' : 's')));
         button.addEventListener('click', () => {
           this.selectedJob = job;
           this.renderHistory();
@@ -476,20 +476,20 @@
         this.values[job.toolId] = Object.assign({}, job.values);
         this.selectTool(job.toolId);
         this.formRegion.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        this.status.textContent = 'Settings loaded. Change the output name to preserve previous results.';
+        this.status.textContent = 'Settings loaded. Change the output filename to keep the earlier result.';
       });
       detail.append(reuse);
       if (job.outputs.length) {
-        detail.append(el('p', 'gl-hint', job.status === 'error' ? 'Files created or changed before the failure (may be incomplete):' : 'Created or updated files:'));
+        detail.append(el('p', 'gl-hint', job.status === 'error' ? 'Files created or changed before the failure (may be incomplete):' : 'New or changed files:'));
         job.outputs.forEach(name => {
           const button = el('button', 'gl-file', name);
           button.type = 'button';
           button.addEventListener('click', () => this.openFile(name));
           detail.append(button);
         });
-      } else if (job.status === 'success') detail.append(el('p', 'gl-hint', 'No new files detected. Commands that print a report may only write to the terminal.'));
+      } else if (job.status === 'success') detail.append(el('p', 'gl-hint', 'No files were created or changed. Check the terminal for output.'));
       if (job.log) detail.append(el('pre', 'gl-log' + (job.status === 'error' ? ' gl-error' : ''), job.log.slice(0, 20000) + (job.log.length > 20000 ? '\n… Log truncated; see the terminal for full output.' : '')));
-      if (job.status === 'error' && !job.log) detail.append(el('p', 'gl-hint gl-error', 'Inspect the terminal for error output. Check paths, file formats, and required indexes.'));
+      if (job.status === 'error' && !job.log) detail.append(el('p', 'gl-hint gl-error', 'Check the error in the terminal, including file paths, formats and required indexes.'));
       this.detailRegion.append(detail);
     }
   }

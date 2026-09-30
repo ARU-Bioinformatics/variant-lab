@@ -1204,7 +1204,7 @@
         '',
         'Unix commands:',
         '  ls, cd, pwd, mkdir, cp, mv, rm, less, zcat, file, tree, history, clear',
-        '  Text commands above are real GNU programs, not sampled approximations.',
+        '  Text commands use GNU programs compiled to run in this browser.',
         '  Shell: quotes, globs, |, &&, ||, ;, >, >>, <, 2>, 2>&1. Pipelines stop on failure.',
         '  Not a full Linux OS: no process substitution, background jobs, loops, Python, package installation or networking.',
         '  Pipeline stages run sequentially through byte-preserving files. All work is session-only; download results before reloading.',

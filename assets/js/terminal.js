@@ -270,7 +270,7 @@
         code = 1;
       } finally {
         this._lineBudget = null;
-        if (this._truncated) this.note(`… ${MG.shellUtil.fmtN(this._truncated)} more lines not shown in the browser (a real terminal would print them all). Pipe into head, or send the output to a file with >.`);
+        if (this._truncated) this.note(`… ${MG.shellUtil.fmtN(this._truncated)} more lines omitted from the display. Use head to view fewer lines, or write the output to a file with >.`);
         this.endProgress();
         this.busy = false;
         this.root.classList.remove('busy');
