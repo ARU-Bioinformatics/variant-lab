@@ -1,0 +1,367 @@
+{
+  "environment": "Node Worker browser API shim; actual compiled WASM programs and production worker bridge",
+  "browserVisualQA": false,
+  "fullPairedBowtieCompleted": false,
+  "limitations": [
+    "Default Bowtie2 tests limit each dataset to at most 100 read pairs, followed by a rerun with at most 10 pairs.",
+    "The upstream Bowtie2 build emulates SIMD and is much slower than native code for paired alignment.",
+    "Variant and genotype counts are observed pipeline outputs. They are not truth-set accuracy estimates."
+  ],
+  "datasets": [
+    {
+      "id": "yeast",
+      "name": "Yeast BY4741 mitochondrion",
+      "readSource": "biological",
+      "species": "Saccharomyces cerevisiae",
+      "assembly": "SacCer_Apr2011 / sacCer3 (S288C reference)",
+      "ploidy": 1,
+      "provenance": {
+        "reference": "Full real sacCer3 S288C mitochondrial sequence; original coordinates retained.",
+        "reads": "Real BY4741 paired WGS reads from SRR1569870, copied verbatim from ENA; no simulated reads.",
+        "referenceSources": [
+          "https://hgdownload.soe.ucsc.edu/goldenPath/sacCer3/bigZips/chromFa.tar.gz"
+        ],
+        "readSources": [
+          "https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR156/000/SRR1569870/SRR1569870_1.fastq.gz",
+          "https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR156/000/SRR1569870/SRR1569870_2.fastq.gz"
+        ],
+        "selection": "Retain both original mates if either has a primary mapped alignment to chrM against all 17 sacCer3 chromosomes. No MAPQ or variant filter.",
+        "limitations": [
+          "There is no validated variant truth set; caller agreement is not accuracy.",
+          "The first-run prefix is not a random whole-run sample.",
+          "Read selection depends on primary minimap2 alignment to the full assembly and can exclude divergent or unmapped mitochondrial fragments.",
+          "The browser reference contains only chrM. Some retained mates may be unmapped or map elsewhere in the full assembly; nuclear competition is absent when students remap.",
+          "Mitochondrial ploidy 1 is a calling-model choice; mixed mitochondrial alleles are not ruled out by the sample's haploid nuclear annotation.",
+          "The circular reference is represented linearly, so origin-spanning reads can align poorly."
+        ]
+      },
+      "inputs": {
+        "reference.fa": {
+          "source": "data/yeast/reference.fa",
+          "bytes": 87221,
+          "sha256": "c4ba07c72bced05da50119e195797b71053e594db5fd9c68f7f233f947c30786"
+        },
+        "R1.fastq": {
+          "source": "data/yeast/reads_R1.fastq",
+          "bytes": 2625784,
+          "sha256": "d67bc8d903d35f6f7c7f858e55c9a3f28680e0a84299e59f7e8054793ebb0831",
+          "records": 9785,
+          "minLength": 101,
+          "maxLength": 101
+        },
+        "R2.fastq": {
+          "source": "data/yeast/reads_R2.fastq",
+          "bytes": 2625784,
+          "sha256": "7674afdb31fde4994e8febe510fdbc1b87632ea5afec8f0d621405dd8fa321e5",
+          "records": 9785,
+          "minLength": 101,
+          "maxLength": 101
+        }
+      },
+      "minimap2": {
+        "primaryRecords": 19570,
+        "mappedPrimaryRecords": 19432,
+        "properlyPairedPrimaryRecords": 18954,
+        "coverage": [
+          {
+            "rname": "yeast_chrM",
+            "startpos": 1,
+            "endpos": 85779,
+            "numreads": 19437,
+            "covbases": 81624,
+            "coverage": 95.1562,
+            "meandepth": 22.3644,
+            "meanbaseq": 38.3,
+            "meanmapq": 58.7
+          }
+        ],
+        "multiallelic": {
+          "records": 9,
+          "snpRecords": 5,
+          "indelRecords": 4,
+          "heterozygousGenotypes": 0,
+          "heterozygousPassingQual20": 0,
+          "heterozygousExamples": [],
+          "homozygousAlternateGenotypes": 0,
+          "haploidAlternateGenotypes": 9,
+          "missingGenotypes": 0,
+          "samples": [
+            "results/yeast/mm.bam"
+          ]
+        },
+        "consensus": {
+          "records": 9,
+          "snpRecords": 5,
+          "indelRecords": 4,
+          "heterozygousGenotypes": 0,
+          "heterozygousPassingQual20": 0,
+          "heterozygousExamples": [],
+          "homozygousAlternateGenotypes": 0,
+          "haploidAlternateGenotypes": 9,
+          "missingGenotypes": 0,
+          "samples": [
+            "results/yeast/mm.bam"
+          ]
+        }
+      },
+      "bowtie2": {
+        "100Pairs": {
+          "primaryRecords": 200
+        },
+        "10Pairs": {
+          "primaryRecords": 20
+        },
+        "multiallelic": {
+          "records": 4,
+          "snpRecords": 3,
+          "indelRecords": 1,
+          "heterozygousGenotypes": 0,
+          "heterozygousPassingQual20": 0,
+          "heterozygousExamples": [],
+          "homozygousAlternateGenotypes": 0,
+          "haploidAlternateGenotypes": 4,
+          "missingGenotypes": 0,
+          "samples": [
+            "results/yeast/bt.bam"
+          ]
+        }
+      },
+      "exactSNP": {
+        "records": 62,
+        "snpRecords": 4,
+        "indelRecords": 58,
+        "heterozygousGenotypes": 0,
+        "heterozygousPassingQual20": 0,
+        "heterozygousExamples": [],
+        "homozygousAlternateGenotypes": 0,
+        "haploidAlternateGenotypes": 0,
+        "missingGenotypes": 0,
+        "samples": [],
+        "normalized": {
+          "records": 62,
+          "snpRecords": 4,
+          "indelRecords": 58,
+          "heterozygousGenotypes": 0,
+          "heterozygousPassingQual20": 0,
+          "heterozygousExamples": [],
+          "homozygousAlternateGenotypes": 0,
+          "haploidAlternateGenotypes": 0,
+          "missingGenotypes": 0,
+          "samples": []
+        }
+      }
+    }
+  ],
+  "checks": [
+    {
+      "cmd": "cat rows.tsv",
+      "code": 0,
+      "secs": 0.11744294400000001,
+      "out": "b\t2\na\t1\na\t3\n",
+      "err": ""
+    },
+    {
+      "cmd": "cat rows.tsv | sort | head -n 2 > results/out.tsv",
+      "code": 0,
+      "secs": 0.047311689999999997,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "awk '{s+=$2} END {print s}' rows.tsv",
+      "code": 0,
+      "secs": 0.024703314000000007,
+      "out": "6\n",
+      "err": ""
+    },
+    {
+      "cmd": "grep -q missing rows.tsv",
+      "code": 1,
+      "secs": 0.020793993000000028,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "cat --definitely-not-an-option rows.tsv",
+      "code": 1,
+      "secs": 0.009229703000000028,
+      "out": "",
+      "err": "cat: unrecognized option '--definitely-not-an-option'\nTry 'cat --help' for more information.\n"
+    },
+    {
+      "cmd": "cat rows.tsv",
+      "code": 0,
+      "secs": 0.008612679000000014,
+      "out": "b\t2\na\t1\na\t3\n",
+      "err": ""
+    },
+    {
+      "cmd": "samtools no_such_subcommand",
+      "code": 1,
+      "secs": 0.01398121100000003,
+      "out": "",
+      "err": "[main] unrecognized command 'no_such_subcommand'\n"
+    },
+    {
+      "cmd": "cat missing > results/merged.txt 2>&1",
+      "code": 1,
+      "secs": 0.008729611999999975,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "cat missing && echo WRONG",
+      "code": 1,
+      "secs": 0.012494467999999984,
+      "out": "",
+      "err": "(null): missing: No such file or directory\n"
+    },
+    {
+      "cmd": "tr a-z A-Z < rows.tsv > results/upper.tsv",
+      "code": 0,
+      "secs": 0.021131709000000002,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "samtools --version",
+      "code": 0,
+      "secs": 0.004347210000000018,
+      "out": "samtools 1.17\nUsing htslib 1.17\nCopyright (C) 2023 Genome Research Ltd.\n\nSamtools compilation details:\n    Features:    ",
+      "err": ""
+    },
+    {
+      "cmd": "minimap2 --version",
+      "code": 0,
+      "secs": 0.014818641000000014,
+      "out": "2.22-r1101\n",
+      "err": ""
+    },
+    {
+      "cmd": "minimap2 -ax sr datasets/yeast/reference.fa datasets/yeast/R1.fastq datasets/yeast/R2.fastq | samtools sort -o results/yeast/mm.bam",
+      "code": 0,
+      "secs": 12.310985536999999,
+      "out": "",
+      "err": "[M::mm_idx_gen::0.005] collected minimizers\n[M::mm_idx_gen::0.008] sorted minimizers\n[M::main::0.008] loaded/built the index for 1 target sequence(s)\n[M::mm_mapopt_update::0.008] mid_occ = 1000\n[M::mm_idx_stat] kmer size: 21; skip: 11; is_hpc: 0; #seq: 1\n[M::mm_idx_stat::0.008] distinct minimizers: "
+    },
+    {
+      "cmd": "samtools index results/yeast/mm.bam",
+      "code": 0,
+      "secs": 0.03910388199999943,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "samtools quickcheck results/yeast/mm.bam",
+      "code": 0,
+      "secs": 0.010937090000001263,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "samtools view -c -F 2304 results/yeast/mm.bam",
+      "code": 0,
+      "secs": 0.029778205000000526,
+      "out": "19570\n",
+      "err": ""
+    },
+    {
+      "cmd": "samtools view -c -F 2308 results/yeast/mm.bam",
+      "code": 0,
+      "secs": 0.026764244999998483,
+      "out": "19432\n",
+      "err": ""
+    },
+    {
+      "cmd": "samtools view -c -f 2 -F 2304 results/yeast/mm.bam",
+      "code": 0,
+      "secs": 0.03107418400000097,
+      "out": "18954\n",
+      "err": ""
+    },
+    {
+      "cmd": "samtools coverage results/yeast/mm.bam",
+      "code": 0,
+      "secs": 0.05766190300000017,
+      "out": "#rname\tstartpos\tendpos\tnumreads\tcovbases\tcoverage\tmeandepth\tmeanbaseq\tmeanmapq\nyeast_chrM\t1\t85779\t19437\t81624\t95.1562\t22",
+      "err": ""
+    },
+    {
+      "cmd": "bcftools mpileup -Ou -a AD,DP -f datasets/yeast/reference.fa results/yeast/mm.bam | bcftools call -mv --ploidy 1 -Ov -o results/yeast/mm-multiallelic.vcf",
+      "code": 0,
+      "secs": 1.2372862619999996,
+      "out": "",
+      "err": "[mpileup] 1 samples in 1 input files\n[mpileup] maximum number of reads per input file set to -d 250\n"
+    },
+    {
+      "cmd": "bcftools mpileup -Ou -a AD,DP -f datasets/yeast/reference.fa results/yeast/mm.bam | bcftools call -cv --ploidy 1 -Ov -o results/yeast/mm-consensus.vcf",
+      "code": 0,
+      "secs": 1.1564565829999993,
+      "out": "",
+      "err": "[mpileup] 1 samples in 1 input files\n[mpileup] maximum number of reads per input file set to -d 250\n"
+    },
+    {
+      "cmd": "exactSNP -b -i results/yeast/mm.bam -g datasets/yeast/reference.fa -o results/yeast/exact.vcf",
+      "code": 0,
+      "secs": 0.4043822679999994,
+      "out": "",
+      "err": "\n        ==========     _____ _    _ ____  _____  ______          _____  \n        =====         / ____| |  | |  _ \\|  __ \\|  ____|   /\\   |  __ \\ \n          =====      | (___ | |  | | |_) | |__) | |__     /  \\  | |  | |\n            ====      \\___ \\| |  | |  _ <|  _  /|  __|   / /\\ \\ | |  | |\n       "
+    },
+    {
+      "cmd": "bcftools norm -f datasets/yeast/reference.fa -m -any -Ov -o results/yeast/exact-normalized.vcf results/yeast/exact.vcf",
+      "code": 0,
+      "secs": 0.02046350700000039,
+      "out": "",
+      "err": "Lines   total/split/realigned/skipped:\t62/0/58/0\n"
+    },
+    {
+      "cmd": "samtools view -b results/yeast/mm.bam > results/yeast/copy.bam",
+      "code": 0,
+      "secs": 0.27404536200000074,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "samtools quickcheck results/yeast/copy.bam",
+      "code": 0,
+      "secs": 0.010838535999999295,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "cat results/yeast/copy.bam > results/yeast/copy2.bam",
+      "code": 0,
+      "secs": 0.029220251999999163,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "bowtie2 -u 100 -x datasets/yeast/reference -1 datasets/yeast/R1.fastq -2 datasets/yeast/R2.fastq -S results/yeast/bt-100.sam",
+      "code": 0,
+      "secs": 7.162740308,
+      "out": "",
+      "err": "100 reads; of these:\n  100 (100.00%) were paired; of these:\n    13 (13.00%) aligned concordantly 0 times\n    87 (87.00%) aligned concordantly exactly 1 time\n    0 (0.00%) aligned concordantly >1 times\n    ----\n    13 pairs aligned concordantly 0 times; of these:\n      10 (76.92%) aligned discordantl"
+    },
+    {
+      "cmd": "bowtie2 -u 10 -x datasets/yeast/reference -1 datasets/yeast/R1.fastq -2 datasets/yeast/R2.fastq -S results/yeast/bt-10.sam",
+      "code": 0,
+      "secs": 0.9517462720000003,
+      "out": "",
+      "err": "10 reads; of these:\n  10 (100.00%) were paired; of these:\n    0 (0.00%) aligned concordantly 0 times\n    10 (100.00%) aligned concordantly exactly 1 time\n    0 (0.00%) aligned concordantly >1 times\n    ----\n    0 pairs aligned concordantly 0 times; of these:\n      0 (0.00%) aligned discordantly 1 ti"
+    },
+    {
+      "cmd": "samtools sort -o results/yeast/bt.bam results/yeast/bt-100.sam",
+      "code": 0,
+      "secs": 0.016111934999997173,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "bcftools mpileup -Ou -a AD,DP -f datasets/yeast/reference.fa results/yeast/bt.bam | bcftools call -mv --ploidy 1 -Ov -o results/yeast/bt.vcf",
+      "code": 0,
+      "secs": 0.19429805000000125,
+      "out": "",
+      "err": "[mpileup] 1 samples in 1 input files\n[mpileup] maximum number of reads per input file set to -d 250\n"
+    }
+  ]
+}

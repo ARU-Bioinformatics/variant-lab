@@ -1,0 +1,641 @@
+{
+  "environment": "Node Worker browser API shim; actual compiled WASM programs and production worker bridge",
+  "browserVisualQA": false,
+  "fullPairedBowtieCompleted": false,
+  "limitations": [
+    "Default Bowtie2 tests limit each dataset to at most 100 read pairs, followed by a rerun with at most 10 pairs.",
+    "The upstream Bowtie2 build emulates SIMD and is much slower than native code for paired alignment.",
+    "Variant and genotype counts are observed pipeline outputs. They are not truth-set accuracy estimates."
+  ],
+  "datasets": [
+    {
+      "id": "human",
+      "name": "NA12878 exome · CYP2C regions",
+      "readSource": "real biological reads (SRR098401)",
+      "species": "Homo sapiens",
+      "assembly": "GRCh37 / hg19 chr10 slices",
+      "ploidy": 2,
+      "provenance": {
+        "reference": "Real hg19 reference slices retrieved from UCSC; local coordinates",
+        "reads": "Real NA12878/SRR098401 exome reads extracted from public 1000 Genomes phase3 BAM; BAM-stored recalibrated qualities",
+        "sourceAlignment": "https://1000genomes.s3.amazonaws.com/phase3/data/NA12878/exome_alignment/NA12878.mapped.ILLUMINA.bwa.CEU.exome.20121211.bam",
+        "details": "data/human/provenance-human.json",
+        "sourceReadGroup": "SRR098401"
+      },
+      "inputs": {
+        "reference.fa": {
+          "source": "data/human/reference.fa",
+          "bytes": 56963,
+          "sha256": "1bcc0f40286a65dbd0d92a0f4b09354082ca4db1a12e99c56aca969a62c1302e"
+        },
+        "R1.fastq": {
+          "source": "data/human/reads_R1.fastq",
+          "bytes": 626445,
+          "sha256": "4211a2cb05498d2765a103c47efdedc2baba666a0c9b9baf4d050965d5da40a4",
+          "records": 3519,
+          "minLength": 76,
+          "maxLength": 76
+        },
+        "R2.fastq": {
+          "source": "data/human/reads_R2.fastq",
+          "bytes": 626445,
+          "sha256": "ea33cd2ae274d82223672af5d374bef690b942c5b31433dbf810a5a6dbeae686",
+          "records": 3519,
+          "minLength": 76,
+          "maxLength": 76
+        }
+      },
+      "minimap2": {
+        "primaryRecords": 7038,
+        "mappedPrimaryRecords": 6817,
+        "properlyPairedPrimaryRecords": 6670,
+        "coverage": [
+          {
+            "rname": "human_CYP2C19",
+            "startpos": 1,
+            "endpos": 30000,
+            "numreads": 3463,
+            "covbases": 26163,
+            "coverage": 87.21,
+            "meandepth": 8.72653,
+            "meanbaseq": 32.5,
+            "meanmapq": 56.6
+          },
+          {
+            "rname": "human_CYP2C9",
+            "startpos": 1,
+            "endpos": 26000,
+            "numreads": 3354,
+            "covbases": 22708,
+            "coverage": 87.3385,
+            "meandepth": 9.77104,
+            "meanbaseq": 32.9,
+            "meanmapq": 57.3
+          }
+        ],
+        "multiallelic": {
+          "records": 60,
+          "snpRecords": 60,
+          "indelRecords": 0,
+          "heterozygousGenotypes": 28,
+          "heterozygousPassingQual20": 15,
+          "heterozygousExamples": [
+            {
+              "contig": "human_CYP2C19",
+              "position": 2545,
+              "ref": "G",
+              "alt": "T",
+              "qual": 16.5433,
+              "genotype": "0/1",
+              "depth": 6,
+              "allelicDepth": [
+                4,
+                2
+              ]
+            },
+            {
+              "contig": "human_CYP2C19",
+              "position": 4584,
+              "ref": "G",
+              "alt": "A",
+              "qual": 19.4534,
+              "genotype": "0/1",
+              "depth": 4,
+              "allelicDepth": [
+                2,
+                2
+              ]
+            },
+            {
+              "contig": "human_CYP2C19",
+              "position": 5124,
+              "ref": "A",
+              "alt": "G",
+              "qual": 222,
+              "genotype": "0/1",
+              "depth": 57,
+              "allelicDepth": [
+                33,
+                24
+              ]
+            },
+            {
+              "contig": "human_CYP2C19",
+              "position": 7034,
+              "ref": "T",
+              "alt": "C",
+              "qual": 15.2733,
+              "genotype": "0/1",
+              "depth": 2,
+              "allelicDepth": [
+                1,
+                1
+              ]
+            },
+            {
+              "contig": "human_CYP2C19",
+              "position": 8847,
+              "ref": "A",
+              "alt": "G",
+              "qual": 36.6261,
+              "genotype": "0/1",
+              "depth": 3,
+              "allelicDepth": [
+                1,
+                2
+              ]
+            },
+            {
+              "contig": "human_CYP2C19",
+              "position": 11616,
+              "ref": "G",
+              "alt": "A",
+              "qual": 222,
+              "genotype": "0/1",
+              "depth": 92,
+              "allelicDepth": [
+                44,
+                48
+              ]
+            },
+            {
+              "contig": "human_CYP2C19",
+              "position": 13823,
+              "ref": "T",
+              "alt": "G",
+              "qual": 6.39642,
+              "genotype": "0/1",
+              "depth": 3,
+              "allelicDepth": [
+                1,
+                2
+              ]
+            },
+            {
+              "contig": "human_CYP2C19",
+              "position": 15888,
+              "ref": "A",
+              "alt": "G",
+              "qual": 31.1828,
+              "genotype": "0/1",
+              "depth": 4,
+              "allelicDepth": [
+                2,
+                2
+              ]
+            },
+            {
+              "contig": "human_CYP2C19",
+              "position": 18316,
+              "ref": "T",
+              "alt": "C",
+              "qual": 49.2911,
+              "genotype": "0/1",
+              "depth": 4,
+              "allelicDepth": [
+                2,
+                2
+              ]
+            },
+            {
+              "contig": "human_CYP2C9",
+              "position": 444,
+              "ref": "A",
+              "alt": "C",
+              "qual": 15.2551,
+              "genotype": "0/1",
+              "depth": 4,
+              "allelicDepth": [
+                3,
+                1
+              ]
+            }
+          ],
+          "homozygousAlternateGenotypes": 32,
+          "haploidAlternateGenotypes": 0,
+          "missingGenotypes": 0,
+          "samples": [
+            "results/human/mm.bam"
+          ]
+        },
+        "consensus": {
+          "records": 64,
+          "snpRecords": 64,
+          "indelRecords": 0,
+          "heterozygousGenotypes": 34,
+          "heterozygousPassingQual20": 17,
+          "heterozygousExamples": [
+            {
+              "contig": "human_CYP2C19",
+              "position": 2545,
+              "ref": "G",
+              "alt": "T",
+              "qual": 20.0499,
+              "genotype": "0/1",
+              "depth": 6,
+              "allelicDepth": [
+                4,
+                2
+              ]
+            },
+            {
+              "contig": "human_CYP2C19",
+              "position": 4584,
+              "ref": "G",
+              "alt": "A",
+              "qual": 22.0341,
+              "genotype": "0/1",
+              "depth": 4,
+              "allelicDepth": [
+                2,
+                2
+              ]
+            },
+            {
+              "contig": "human_CYP2C19",
+              "position": 5124,
+              "ref": "A",
+              "alt": "G",
+              "qual": 225.009,
+              "genotype": "0/1",
+              "depth": 57,
+              "allelicDepth": [
+                33,
+                24
+              ]
+            },
+            {
+              "contig": "human_CYP2C19",
+              "position": 7034,
+              "ref": "T",
+              "alt": "C",
+              "qual": 18.0803,
+              "genotype": "0/1",
+              "depth": 2,
+              "allelicDepth": [
+                1,
+                1
+              ]
+            },
+            {
+              "contig": "human_CYP2C19",
+              "position": 7389,
+              "ref": "A",
+              "alt": "G",
+              "qual": 3.54574,
+              "genotype": "0/1",
+              "depth": 2,
+              "allelicDepth": [
+                1,
+                1
+              ]
+            },
+            {
+              "contig": "human_CYP2C19",
+              "position": 8792,
+              "ref": "T",
+              "alt": "C",
+              "qual": 3.0136,
+              "genotype": "0/1",
+              "depth": 4,
+              "allelicDepth": [
+                3,
+                1
+              ]
+            },
+            {
+              "contig": "human_CYP2C19",
+              "position": 8847,
+              "ref": "A",
+              "alt": "G",
+              "qual": 40.0183,
+              "genotype": "0/1",
+              "depth": 3,
+              "allelicDepth": [
+                1,
+                2
+              ]
+            },
+            {
+              "contig": "human_CYP2C19",
+              "position": 11616,
+              "ref": "G",
+              "alt": "A",
+              "qual": 225.009,
+              "genotype": "0/1",
+              "depth": 92,
+              "allelicDepth": [
+                44,
+                48
+              ]
+            },
+            {
+              "contig": "human_CYP2C19",
+              "position": 13823,
+              "ref": "T",
+              "alt": "G",
+              "qual": 8.65058,
+              "genotype": "0/1",
+              "depth": 3,
+              "allelicDepth": [
+                1,
+                2
+              ]
+            },
+            {
+              "contig": "human_CYP2C19",
+              "position": 15888,
+              "ref": "A",
+              "alt": "G",
+              "qual": 34.0087,
+              "genotype": "0/1",
+              "depth": 4,
+              "allelicDepth": [
+                2,
+                2
+              ]
+            }
+          ],
+          "homozygousAlternateGenotypes": 30,
+          "haploidAlternateGenotypes": 0,
+          "missingGenotypes": 0,
+          "samples": [
+            "results/human/mm.bam"
+          ]
+        }
+      },
+      "bowtie2": {
+        "100Pairs": {
+          "primaryRecords": 200
+        },
+        "10Pairs": {
+          "primaryRecords": 20
+        },
+        "multiallelic": {
+          "records": 2,
+          "snpRecords": 2,
+          "indelRecords": 0,
+          "heterozygousGenotypes": 1,
+          "heterozygousPassingQual20": 1,
+          "heterozygousExamples": [
+            {
+              "contig": "human_CYP2C19",
+              "position": 5124,
+              "ref": "A",
+              "alt": "G",
+              "qual": 20.2704,
+              "genotype": "0/1",
+              "depth": 5,
+              "allelicDepth": [
+                2,
+                3
+              ]
+            }
+          ],
+          "homozygousAlternateGenotypes": 1,
+          "haploidAlternateGenotypes": 0,
+          "missingGenotypes": 0,
+          "samples": [
+            "results/human/bt.bam"
+          ]
+        }
+      },
+      "exactSNP": {
+        "records": 29,
+        "snpRecords": 20,
+        "indelRecords": 9,
+        "heterozygousGenotypes": 0,
+        "heterozygousPassingQual20": 0,
+        "heterozygousExamples": [],
+        "homozygousAlternateGenotypes": 0,
+        "haploidAlternateGenotypes": 0,
+        "missingGenotypes": 0,
+        "samples": [],
+        "normalized": {
+          "records": 29,
+          "snpRecords": 20,
+          "indelRecords": 9,
+          "heterozygousGenotypes": 0,
+          "heterozygousPassingQual20": 0,
+          "heterozygousExamples": [],
+          "homozygousAlternateGenotypes": 0,
+          "haploidAlternateGenotypes": 0,
+          "missingGenotypes": 0,
+          "samples": []
+        }
+      }
+    }
+  ],
+  "checks": [
+    {
+      "cmd": "cat rows.tsv",
+      "code": 0,
+      "secs": 0.098870453,
+      "out": "b\t2\na\t1\na\t3\n",
+      "err": ""
+    },
+    {
+      "cmd": "cat rows.tsv | sort | head -n 2 > results/out.tsv",
+      "code": 0,
+      "secs": 0.056569108,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "awk '{s+=$2} END {print s}' rows.tsv",
+      "code": 0,
+      "secs": 0.029772171000000014,
+      "out": "6\n",
+      "err": ""
+    },
+    {
+      "cmd": "grep -q missing rows.tsv",
+      "code": 1,
+      "secs": 0.01769046499999999,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "cat --definitely-not-an-option rows.tsv",
+      "code": 1,
+      "secs": 0.010101899000000003,
+      "out": "",
+      "err": "cat: unrecognized option '--definitely-not-an-option'\nTry 'cat --help' for more information.\n"
+    },
+    {
+      "cmd": "cat rows.tsv",
+      "code": 0,
+      "secs": 0.00913071500000001,
+      "out": "b\t2\na\t1\na\t3\n",
+      "err": ""
+    },
+    {
+      "cmd": "samtools no_such_subcommand",
+      "code": 1,
+      "secs": 0.015041765999999996,
+      "out": "",
+      "err": "[main] unrecognized command 'no_such_subcommand'\n"
+    },
+    {
+      "cmd": "cat missing > results/merged.txt 2>&1",
+      "code": 1,
+      "secs": 0.010262832000000003,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "cat missing && echo WRONG",
+      "code": 1,
+      "secs": 0.007752929999999992,
+      "out": "",
+      "err": "(null): missing: No such file or directory\n"
+    },
+    {
+      "cmd": "tr a-z A-Z < rows.tsv > results/upper.tsv",
+      "code": 0,
+      "secs": 0.026919830000000047,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "samtools --version",
+      "code": 0,
+      "secs": 0.005949718000000019,
+      "out": "samtools 1.17\nUsing htslib 1.17\nCopyright (C) 2023 Genome Research Ltd.\n\nSamtools compilation details:\n    Features:    ",
+      "err": ""
+    },
+    {
+      "cmd": "minimap2 --version",
+      "code": 0,
+      "secs": 0.015384689000000036,
+      "out": "2.22-r1101\n",
+      "err": ""
+    },
+    {
+      "cmd": "minimap2 -ax sr datasets/human/reference.fa datasets/human/R1.fastq datasets/human/R2.fastq | samtools sort -o results/human/mm.bam",
+      "code": 0,
+      "secs": 4.15776056,
+      "out": "",
+      "err": "[M::mm_idx_gen::0.005] collected minimizers\n[M::mm_idx_gen::0.008] sorted minimizers\n[M::main::0.008] loaded/built the index for 2 target sequence(s)\n[M::mm_mapopt_update::0.008] mid_occ = 1000\n[M::mm_idx_stat] kmer size: 21; skip: 11; is_hpc: 0; #seq: 2\n[M::mm_idx_stat::0.009] distinct minimizers: "
+    },
+    {
+      "cmd": "samtools index results/human/mm.bam",
+      "code": 0,
+      "secs": 0.023044614999999793,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "samtools quickcheck results/human/mm.bam",
+      "code": 0,
+      "secs": 0.011411858999999823,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "samtools view -c -F 2304 results/human/mm.bam",
+      "code": 0,
+      "secs": 0.024061490999999477,
+      "out": "7038\n",
+      "err": ""
+    },
+    {
+      "cmd": "samtools view -c -F 2308 results/human/mm.bam",
+      "code": 0,
+      "secs": 0.022103766000000177,
+      "out": "6817\n",
+      "err": ""
+    },
+    {
+      "cmd": "samtools view -c -f 2 -F 2304 results/human/mm.bam",
+      "code": 0,
+      "secs": 0.02154658599999948,
+      "out": "6670\n",
+      "err": ""
+    },
+    {
+      "cmd": "samtools coverage results/human/mm.bam",
+      "code": 0,
+      "secs": 0.03850889199999983,
+      "out": "#rname\tstartpos\tendpos\tnumreads\tcovbases\tcoverage\tmeandepth\tmeanbaseq\tmeanmapq\nhuman_CYP2C19\t1\t30000\t3463\t26163\t87.21\t8.",
+      "err": ""
+    },
+    {
+      "cmd": "bcftools mpileup -Ou -a AD,DP -f datasets/human/reference.fa results/human/mm.bam | bcftools call -mv  -Ov -o results/human/mm-multiallelic.vcf",
+      "code": 0,
+      "secs": 0.532744705,
+      "out": "",
+      "err": "[mpileup] 1 samples in 1 input files\n[mpileup] maximum number of reads per input file set to -d 250\nNote: none of --samples-file, --ploidy or --ploidy-file given, assuming all sites are diploid\n"
+    },
+    {
+      "cmd": "bcftools mpileup -Ou -a AD,DP -f datasets/human/reference.fa results/human/mm.bam | bcftools call -cv  -Ov -o results/human/mm-consensus.vcf",
+      "code": 0,
+      "secs": 0.5264062409999997,
+      "out": "",
+      "err": "[mpileup] 1 samples in 1 input files\n[mpileup] maximum number of reads per input file set to -d 250\nNote: none of --samples-file, --ploidy or --ploidy-file given, assuming all sites are diploid\n"
+    },
+    {
+      "cmd": "exactSNP -b -i results/human/mm.bam -g datasets/human/reference.fa -o results/human/exact.vcf",
+      "code": 0,
+      "secs": 0.24170335000000068,
+      "out": "",
+      "err": "\n        ==========     _____ _    _ ____  _____  ______          _____  \n        =====         / ____| |  | |  _ \\|  __ \\|  ____|   /\\   |  __ \\ \n          =====      | (___ | |  | | |_) | |__) | |__     /  \\  | |  | |\n            ====      \\___ \\| |  | |  _ <|  _  /|  __|   / /\\ \\ | |  | |\n       "
+    },
+    {
+      "cmd": "bcftools norm -f datasets/human/reference.fa -m -any -Ov -o results/human/exact-normalized.vcf results/human/exact.vcf",
+      "code": 0,
+      "secs": 0.014830603999999767,
+      "out": "",
+      "err": "Lines   total/split/realigned/skipped:\t29/0/9/0\n"
+    },
+    {
+      "cmd": "samtools view -b results/human/mm.bam > results/human/copy.bam",
+      "code": 0,
+      "secs": 0.08051249599999938,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "samtools quickcheck results/human/copy.bam",
+      "code": 0,
+      "secs": 0.012545467999999347,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "cat results/human/copy.bam > results/human/copy2.bam",
+      "code": 0,
+      "secs": 0.0260318240000006,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "bowtie2 -u 100 -x datasets/human/reference -1 datasets/human/R1.fastq -2 datasets/human/R2.fastq -S results/human/bt-100.sam",
+      "code": 0,
+      "secs": 8.362108635,
+      "out": "",
+      "err": "100 reads; of these:\n  100 (100.00%) were paired; of these:\n    1 (1.00%) aligned concordantly 0 times\n    40 (40.00%) aligned concordantly exactly 1 time\n    59 (59.00%) aligned concordantly >1 times\n    ----\n    1 pairs aligned concordantly 0 times; of these:\n      0 (0.00%) aligned discordantly 1"
+    },
+    {
+      "cmd": "bowtie2 -u 10 -x datasets/human/reference -1 datasets/human/R1.fastq -2 datasets/human/R2.fastq -S results/human/bt-10.sam",
+      "code": 0,
+      "secs": 0.8400503280000011,
+      "out": "",
+      "err": "10 reads; of these:\n  10 (100.00%) were paired; of these:\n    0 (0.00%) aligned concordantly 0 times\n    5 (50.00%) aligned concordantly exactly 1 time\n    5 (50.00%) aligned concordantly >1 times\n    ----\n    0 pairs aligned concordantly 0 times; of these:\n      0 (0.00%) aligned discordantly 1 tim"
+    },
+    {
+      "cmd": "samtools sort -o results/human/bt.bam results/human/bt-100.sam",
+      "code": 0,
+      "secs": 0.016921183999998902,
+      "out": "",
+      "err": ""
+    },
+    {
+      "cmd": "bcftools mpileup -Ou -a AD,DP -f datasets/human/reference.fa results/human/bt.bam | bcftools call -mv  -Ov -o results/human/bt.vcf",
+      "code": 0,
+      "secs": 0.16002610300000014,
+      "out": "",
+      "err": "[mpileup] 1 samples in 1 input files\n[mpileup] maximum number of reads per input file set to -d 250\nNote: none of --samples-file, --ploidy or --ploidy-file given, assuming all sites are diploid\n"
+    }
+  ]
+}

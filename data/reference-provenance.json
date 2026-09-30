@@ -1,0 +1,36 @@
+[
+  {
+    "dataset": "human",
+    "contig": "human_CYP2C19",
+    "sourceContig": "chr10",
+    "start": 96530001,
+    "end": 96560000,
+    "length": 30000,
+    "sourceUrl": "https://api.genome.ucsc.edu/getData/sequence?genome=hg19;chrom=chr10;start=96530000;end=96560000",
+    "sequenceSha256": "57949126673cb6f0507eba1c58358b04c99b031822228ce497eaec36be65abab"
+  },
+  {
+    "dataset": "human",
+    "contig": "human_CYP2C9",
+    "sourceContig": "chr10",
+    "start": 96699001,
+    "end": 96725000,
+    "length": 26000,
+    "sourceUrl": "https://api.genome.ucsc.edu/getData/sequence?genome=hg19;chrom=chr10;start=96699000;end=96725000",
+    "sequenceSha256": "39d3cfa3113008c30be16c5ef4347594e209e2eb26b641c6ee2affa773eece92"
+  },
+  {
+    "dataset": "yeast",
+    "assembly": "SacCer_Apr2011 / sacCer3",
+    "sourceStrain": "S288C",
+    "wholeAssemblyURL": "https://hgdownload.soe.ucsc.edu/goldenPath/sacCer3/bigZips/chromFa.tar.gz",
+    "archiveSHA256": "7538d736aa80168448819c75faf299abe6672061fa38a4606fec8ca4f575c35d",
+    "selectionReferenceContigs": 17,
+    "selectionReferenceBases": 12157105,
+    "displayContig": "yeast_chrM",
+    "originalContig": "chrM",
+    "length": 85779,
+    "sequenceSHA256": "91d5192f1bd21aa9a00259b21a43c450de1926e87fb1847ab1533f437e1b488e",
+    "coordinateMapping": "yeast_chrM positions equal UCSC sacCer3 chrM positions; only the FASTA identifier is renamed."
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "execution": "Genuine exactSNP and BCFtools WASM; Node VM transport; not a browser test",
+  "exactSNPCode": 0,
+  "nativeRecordsUnchangedByAdapter": true,
+  "referenceContigs": [
+    "chrT:300",
+    "chrU:100"
+  ],
+  "missingInfoDeclared": true,
+  "qualityScaleAndSourceDeclared": true,
+  "tempDirectoryWorked": true,
+  "bcftoolsNormStderr": "Lines   total/split/realigned/skipped:\t1/0/0/0\n",
+  "normalizedRecords": [
+    "chrT\t100\t.\tC\tA\t40\t.\tDP=80;MMsum=40;MM=40;BGTOTAL=800;BGMM=0"
+  ]
+}

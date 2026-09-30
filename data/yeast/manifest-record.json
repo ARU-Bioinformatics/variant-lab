@@ -1,0 +1,63 @@
+{
+  "id": "yeast",
+  "name": "Yeast BY4741 mitochondrion",
+  "species": "Saccharomyces cerevisiae",
+  "assembly": "SacCer_Apr2011 / sacCer3 (S288C reference)",
+  "description": "Authentic paired Illumina WGS reads from BY4741, enriched for mitochondrial read pairs using the complete yeast genome.",
+  "readSource": "biological",
+  "sample": "BY4741",
+  "accession": "SRR1569870",
+  "ploidy": 1,
+  "circular": true,
+  "reference": "data/yeast/reference.fa",
+  "read1": "data/yeast/reads_R1.fastq",
+  "read2": "data/yeast/reads_R2.fastq",
+  "truth": null,
+  "truthCount": null,
+  "regionsBed": "data/yeast/regions.bed",
+  "lowCoverageBed": null,
+  "pairs": 9785,
+  "readLength": 101,
+  "coverage": 22.36,
+  "nominalCoverage": null,
+  "bowtie2Index": "data/yeast/reference",
+  "bowtie2Files": [
+    "data/yeast/reference.1.bt2",
+    "data/yeast/reference.2.bt2",
+    "data/yeast/reference.3.bt2",
+    "data/yeast/reference.4.bt2",
+    "data/yeast/reference.rev.1.bt2",
+    "data/yeast/reference.rev.2.bt2"
+  ],
+  "provenanceFile": "data/yeast/provenance-yeast.json",
+  "provenance": {
+    "reference": "Full real sacCer3 S288C mitochondrial sequence; original coordinates retained.",
+    "reads": "Real BY4741 paired WGS reads from SRR1569870, copied verbatim from ENA; no simulated reads.",
+    "referenceSources": [
+      "https://hgdownload.soe.ucsc.edu/goldenPath/sacCer3/bigZips/chromFa.tar.gz"
+    ],
+    "readSources": [
+      "https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR156/000/SRR1569870/SRR1569870_1.fastq.gz",
+      "https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR156/000/SRR1569870/SRR1569870_2.fastq.gz"
+    ],
+    "selection": "Retain both original mates if either has a primary mapped alignment to chrM against all 17 sacCer3 chromosomes. No MAPQ or variant filter.",
+    "limitations": [
+      "There is no validated variant truth set; caller agreement is not accuracy.",
+      "The first-run prefix is not a random whole-run sample.",
+      "Read selection depends on primary minimap2 alignment to the full assembly and can exclude divergent or unmapped mitochondrial fragments.",
+      "The browser reference contains only chrM. Some retained mates may be unmapped or map elsewhere in the full assembly; nuclear competition is absent when students remap.",
+      "Mitochondrial ploidy 1 is a calling-model choice; mixed mitochondrial alleles are not ruled out by the sample's haploid nuclear annotation.",
+      "The circular reference is represented linearly, so origin-spanning reads can align poorly."
+    ]
+  },
+  "regions": [
+    {
+      "contig": "yeast_chrM",
+      "length": 85779,
+      "sourceContig": "chrM",
+      "start": 1,
+      "end": 85779,
+      "coordinateSystem": "1-based inclusive; identical to source chromosome coordinates."
+    }
+  ]
+}

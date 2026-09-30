@@ -1,0 +1,171 @@
+{
+  "ok": true,
+  "checkedAt": "2026-09-30T18:17:31.969628+00:00",
+  "manifest": "/workspace/scratch/8a92413ee603/variant-lab/data/manifest.json",
+  "datasets": [
+    {
+      "id": "human",
+      "readSource": "real biological reads (SRR098401)",
+      "ok": true,
+      "errors": [],
+      "sourceMetadata": {
+        "declaredSourceAccepted": true,
+        "simulatedSourcesAllowed": false
+      },
+      "reference": {
+        "path": "data/human/reference.fa",
+        "bytes": 56963,
+        "sha256": "1bcc0f40286a65dbd0d92a0f4b09354082ca4db1a12e99c56aca969a62c1302e",
+        "contigs": [
+          {
+            "id": "human_CYP2C19",
+            "length": 30000
+          },
+          {
+            "id": "human_CYP2C9",
+            "length": 26000
+          }
+        ],
+        "totalBases": 56000
+      },
+      "reads": {
+        "read1": {
+          "path": "data/human/reads_R1.fastq",
+          "bytes": 626445,
+          "sha256": "4211a2cb05498d2765a103c47efdedc2baba666a0c9b9baf4d050965d5da40a4",
+          "records": 3519,
+          "bases": 267444,
+          "minReadLength": 76,
+          "maxReadLength": 76,
+          "explicitMateFlags": 3519
+        },
+        "read2": {
+          "path": "data/human/reads_R2.fastq",
+          "bytes": 626445,
+          "sha256": "ea33cd2ae274d82223672af5d374bef690b942c5b31433dbf810a5a6dbeae686",
+          "records": 3519,
+          "bases": 267444,
+          "minReadLength": 76,
+          "maxReadLength": 76,
+          "explicitMateFlags": 3519
+        },
+        "layout": "paired-end",
+        "pairs": 3519,
+        "pairNamesMatch": true
+      },
+      "bowtie2Files": [
+        {
+          "path": "data/human/reference.1.bt2",
+          "bytes": 281020,
+          "sha256": "6cf3396fe71f912a6983aa8c04140f956a61e82212d06863e654c6dff8fbc325"
+        },
+        {
+          "path": "data/human/reference.2.bt2",
+          "bytes": 14008,
+          "sha256": "d95bff0797c734185c5121a1653f38807e1f3133f0db9b155208a6bf4da5ae72"
+        },
+        {
+          "path": "data/human/reference.3.bt2",
+          "bytes": 26,
+          "sha256": "74aa248dfbdb3af0ef3dae70b3cc3355c19870d6cd973527c284cb5b0811ec6b"
+        },
+        {
+          "path": "data/human/reference.4.bt2",
+          "bytes": 14000,
+          "sha256": "179f90df239b4800882be59047e5bf3d37600d0b7925172c9c96bbe9051c78f3"
+        },
+        {
+          "path": "data/human/reference.rev.1.bt2",
+          "bytes": 281020,
+          "sha256": "b87154aa8889d76b81951eb0b5b1ca7e25132b0239bb991c201e2e5554662aa3"
+        },
+        {
+          "path": "data/human/reference.rev.2.bt2",
+          "bytes": 14008,
+          "sha256": "44088d9efeb86e4bc8989ed71707cb6099308bb6765b7a630f730c03db92d9be"
+        }
+      ]
+    },
+    {
+      "id": "yeast",
+      "readSource": "biological",
+      "ok": true,
+      "errors": [],
+      "sourceMetadata": {
+        "declaredSourceAccepted": true,
+        "simulatedSourcesAllowed": false
+      },
+      "reference": {
+        "path": "data/yeast/reference.fa",
+        "bytes": 87221,
+        "sha256": "c4ba07c72bced05da50119e195797b71053e594db5fd9c68f7f233f947c30786",
+        "contigs": [
+          {
+            "id": "yeast_chrM",
+            "length": 85779
+          }
+        ],
+        "totalBases": 85779
+      },
+      "reads": {
+        "read1": {
+          "path": "data/yeast/reads_R1.fastq",
+          "bytes": 2625784,
+          "sha256": "d67bc8d903d35f6f7c7f858e55c9a3f28680e0a84299e59f7e8054793ebb0831",
+          "records": 9785,
+          "bases": 988285,
+          "minReadLength": 101,
+          "maxReadLength": 101,
+          "explicitMateFlags": 0
+        },
+        "read2": {
+          "path": "data/yeast/reads_R2.fastq",
+          "bytes": 2625784,
+          "sha256": "7674afdb31fde4994e8febe510fdbc1b87632ea5afec8f0d621405dd8fa321e5",
+          "records": 9785,
+          "bases": 988285,
+          "minReadLength": 101,
+          "maxReadLength": 101,
+          "explicitMateFlags": 0
+        },
+        "layout": "paired-end",
+        "pairs": 9785,
+        "pairNamesMatch": true
+      },
+      "bowtie2Files": [
+        {
+          "path": "data/yeast/reference.1.bt2",
+          "bytes": 290908,
+          "sha256": "9be72e86966066b63002b44d65c11dcc970aa328192d7421b54cdd19d8127069"
+        },
+        {
+          "path": "data/yeast/reference.2.bt2",
+          "bytes": 21452,
+          "sha256": "3dbf1270ab38430b832c462b2d494498ad772f6e836ade930df56c1de1c5bfc1"
+        },
+        {
+          "path": "data/yeast/reference.3.bt2",
+          "bytes": 17,
+          "sha256": "c357a076669c251bd0b6891916553873bd14367129a4d7128e453c2cc9ff747f"
+        },
+        {
+          "path": "data/yeast/reference.4.bt2",
+          "bytes": 21445,
+          "sha256": "24e620bff0d1a6be6b57fa8769b4712d8ca52c00b8c873ef916e0f71d6368655"
+        },
+        {
+          "path": "data/yeast/reference.rev.1.bt2",
+          "bytes": 290908,
+          "sha256": "c28200ae35b50488cb8cdb8516a1147d243fdb759744d3593006038a17d972d0"
+        },
+        {
+          "path": "data/yeast/reference.rev.2.bt2",
+          "bytes": 21452,
+          "sha256": "eb9cb840a3e6969993ebf6c8a0ec0706b4d9c6506dea42f4d94e989d4e7539c1"
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "manifestSha256": "0b95f955ebd5b82f4b0fffde746d6035ef3a42e7cb02dcc09241227595e73506"
+}

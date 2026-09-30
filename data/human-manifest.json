@@ -1,0 +1,56 @@
+{
+  "id": "human",
+  "name": "NA12878 exome \u00b7 CYP2C regions",
+  "species": "Homo sapiens",
+  "sample": "NA12878",
+  "assembly": "GRCh37 / hg19 chr10 slices",
+  "readSource": "real biological reads (SRR098401)",
+  "description": "Genuine NA12878 exome read pairs from the same public run used in the original practical. Two CYP2C regions with observed heterozygosity and uneven exome coverage; BAM-recalibrated qualities.",
+  "reference": "data/human/reference.fa",
+  "read1": "data/human/reads_R1.fastq",
+  "read2": "data/human/reads_R2.fastq",
+  "truth": null,
+  "truthCount": 0,
+  "ploidy": 2,
+  "circular": false,
+  "readLength": 76,
+  "pairs": 3519,
+  "coverage": 9.55,
+  "coverageMeaning": "Read bases / reference span; exome depth is uneven",
+  "regionsBed": "data/human/regions.bed",
+  "lowCoverageBed": null,
+  "bowtie2Index": "data/human/reference",
+  "bowtie2Files": [
+    "data/human/reference.1.bt2",
+    "data/human/reference.2.bt2",
+    "data/human/reference.3.bt2",
+    "data/human/reference.4.bt2",
+    "data/human/reference.rev.1.bt2",
+    "data/human/reference.rev.2.bt2"
+  ],
+  "provenance": {
+    "reference": "Real hg19 reference slices retrieved from UCSC; local coordinates",
+    "reads": "Real NA12878/SRR098401 exome reads extracted from public 1000 Genomes phase3 BAM; BAM-stored recalibrated qualities",
+    "sourceAlignment": "https://1000genomes.s3.amazonaws.com/phase3/data/NA12878/exome_alignment/NA12878.mapped.ILLUMINA.bwa.CEU.exome.20121211.bam",
+    "details": "data/human/provenance-human.json",
+    "sourceReadGroup": "SRR098401"
+  },
+  "regions": [
+    {
+      "contig": "human_CYP2C19",
+      "length": 30000,
+      "sourceContig": "chr10",
+      "start": 96530001,
+      "end": 96560000,
+      "coordinateSystem": "Source coordinates are 1-based inclusive; FASTA/BAM/VCF use local slice positions"
+    },
+    {
+      "contig": "human_CYP2C9",
+      "length": 26000,
+      "sourceContig": "chr10",
+      "start": 96699001,
+      "end": 96725000,
+      "coordinateSystem": "Source coordinates are 1-based inclusive; FASTA/BAM/VCF use local slice positions"
+    }
+  ]
+}
